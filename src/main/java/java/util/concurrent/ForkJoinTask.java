@@ -4,18 +4,24 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package java.util.concurrent;
-
-import net.shipilev.fjptrace.EventType;
+package jsr166y;
 
 import java.io.Serializable;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
+import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.lang.reflect.Constructor;
 
 /**
  * Abstract base class for tasks that run within a {@link ForkJoinPool}.
@@ -252,7 +258,6 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     final int doExec() {
         int s; boolean completed;
-        registerEvent(EventType.EXEC);
         if ((s = status) >= 0) {
             try {
                 completed = exec();
@@ -262,7 +267,6 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             if (completed)
                 s = setCompletion(NORMAL);
         }
-        registerEvent(EventType.EXECED);
         return s;
     }
 
@@ -353,7 +357,6 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     private int doInvoke() {
         int s; Thread t; ForkJoinWorkerThread wt;
-        registerEvent(EventType.INVOKE);
         if ((s = doExec()) >= 0) {
             if ((t = Thread.currentThread()) instanceof ForkJoinWorkerThread)
                 s = (wt = (ForkJoinWorkerThread)t).pool.awaitJoin(wt.workQueue,
@@ -361,7 +364,6 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             else
                 s = externalAwaitDone();
         }
-        registerEvent(EventType.INVOKED);
         return s;
     }
 
@@ -635,8 +637,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return {@code this}, to simplify usage
      */
     public final ForkJoinTask<V> fork() {
-        registerEvent(EventType.FORK);
-        ((ForkJoinWorkerThread) Thread.currentThread()).workQueue.push(this);
+        ((ForkJoinWorkerThread)Thread.currentThread()).workQueue.push(this);
         return this;
     }
 
@@ -653,21 +654,9 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public final V join() {
         int s;
-        registerEvent(EventType.JOIN);
-        try {
-            if ((s = doJoin() & DONE_MASK) != NORMAL)
-                reportException(s);
-            return getRawResult();
-        } finally {
-            registerEvent(EventType.JOINED);
-        }
-    }
-
-    private void registerEvent(EventType event) {
-        Thread caller = Thread.currentThread();
-        if (caller instanceof ForkJoinWorkerThread) {
-            ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, this);
-        }
+        if ((s = doJoin() & DONE_MASK) != NORMAL)
+            reportException(s);
+        return getRawResult();
     }
 
     /**
@@ -1088,7 +1077,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public static void helpQuiesce() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         wt.pool.helpQuiescePool(wt.workQueue);
     }
 
@@ -1157,7 +1146,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return {@code true} if unforked
      */
     public boolean tryUnfork() {
-        return ((ForkJoinWorkerThread) Thread.currentThread())
+        return ((ForkJoinWorkerThread)Thread.currentThread())
             .workQueue.tryUnpush(this);
     }
 
@@ -1243,7 +1232,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
          * (#idle/#active) threads.
          */
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         return wt.workQueue.queueSize() - wt.pool.idlePerActive();
     }
 
@@ -1346,7 +1335,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     protected static ForkJoinTask<?> pollTask() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         return wt.pool.nextTaskFor(wt.workQueue);
     }
 
@@ -1541,7 +1530,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         exceptionTableRefQueue = new ReferenceQueue<Object>();
         exceptionTable = new ExceptionNode[EXCEPTION_MAP_CAPACITY];
         try {
-            U = sun.misc.Unsafe.getUnsafe();
+            U = getUnsafe();
             STATUS = U.objectFieldOffset
                 (ForkJoinTask.class.getDeclaredField("status"));
         } catch (Exception e) {
@@ -1549,4 +1538,31 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         }
     }
 
+    /**
+     * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
+     * Replace with a simple call to Unsafe.getUnsafe when integrating
+     * into a jdk.
+     *
+     * @return a sun.misc.Unsafe
+     */
+    private static sun.misc.Unsafe getUnsafe() {
+        try {
+            return sun.misc.Unsafe.getUnsafe();
+        } catch (SecurityException se) {
+            try {
+                return java.security.AccessController.doPrivileged
+                    (new java.security
+                     .PrivilegedExceptionAction<sun.misc.Unsafe>() {
+                        public sun.misc.Unsafe run() throws Exception {
+                            java.lang.reflect.Field f = sun.misc
+                                .Unsafe.class.getDeclaredField("theUnsafe");
+                            f.setAccessible(true);
+                            return (sun.misc.Unsafe) f.get(null);
+                        }});
+            } catch (java.security.PrivilegedActionException e) {
+                throw new RuntimeException("Could not initialize intrinsics",
+                                           e.getCause());
+            }
+        }
+    }
 }

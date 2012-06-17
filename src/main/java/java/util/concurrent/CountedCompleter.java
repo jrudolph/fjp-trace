@@ -4,9 +4,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package java.util.concurrent;
-
-import net.shipilev.fjptrace.EventType;
+package jsr166y;
 
 /**
  * A resultless {@link ForkJoinTask} with a completion action
@@ -25,7 +23,7 @@ import net.shipilev.fjptrace.EventType;
  * this completer itself has a completer, the process is continued
  * with its completer.  As is the case with related synchronization
  * components such as {@link Phaser} and {@link
- * Semaphore} these methods affect only internal
+ * java.util.concurrent.Semaphore} these methods affect only internal
  * counts; they do not establish any further internal bookkeeping. In
  * particular, the identities of pending tasks are not maintained. As
  * illustrated below, you can create subclasses that do record some or
@@ -423,13 +421,6 @@ public abstract class CountedCompleter extends ForkJoinTask<Void> {
     protected final boolean exec() {
         compute();
         return false;
-    }
-
-    private void registerEvent(EventType event) {
-        Thread caller = Thread.currentThread();
-        if (caller instanceof ForkJoinWorkerThread) {
-            ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, this);
-        }
     }
 
     /**

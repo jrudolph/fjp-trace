@@ -4,9 +4,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package java.util.concurrent;
-
-import net.shipilev.fjptrace.EventType;
+package jsr166y;
 
 /**
  * A thread managed by a {@link ForkJoinPool}, which executes
@@ -118,3 +116,4 @@ public class ForkJoinWorkerThread extends Thread {
         }
     }
 }
+

@@ -4,18 +4,20 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package java.util.concurrent;
-
-import net.shipilev.fjptrace.EventType;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+package jsr166y;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -626,25 +628,17 @@ public class ForkJoinPool extends AbstractExecutorService {
         ForkJoinTask<?>[] array;   // the elements (initially unallocated)
         final ForkJoinPool pool;   // the containing pool (may be null)
         final ForkJoinWorkerThread owner; // owning thread or null if shared
-        final long ownerId;
         volatile Thread parker;    // == owner during call to park; else null
         volatile ForkJoinTask<?> currentJoin;  // task being joined in awaitJoin
         ForkJoinTask<?> currentSteal; // current non-local task being executed
-        long lastWrite;
-        final byte[] traceEventBuffer;
-        int traceEventPos;
-
         // Heuristic padding to ameliorate unfortunate memory placements
         Object p00, p01, p02, p03, p04, p05, p06, p07;
         Object p08, p09, p0a, p0b, p0c, p0d, p0e;
-
 
         WorkQueue(ForkJoinPool pool, ForkJoinWorkerThread owner, int mode) {
             this.mode = mode;
             this.pool = pool;
             this.owner = owner;
-            this.ownerId = (owner != null) ? owner.getId() : -1;
-            this.traceEventBuffer = (TRACE ? new byte[BUFFER_LIMIT] : null);
             // Place indices in the center of array (that is not yet allocated)
             base = top = INITIAL_QUEUE_CAPACITY >>> 1;
         }
@@ -1030,35 +1024,6 @@ public class ForkJoinPool extends AbstractExecutorService {
                 U.unpark(p);
         }
 
-        /**
-         * Register local event, called by owner thread only
-         */
-        final void registerEvent(EventType event, ForkJoinTask<?> task) {
-            if (!TRACE) return;
-
-            long time = System.nanoTime();
-
-            final int CHUNK_SIZE = 22;
-            if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE > BUFFER_LIMIT)) {
-                synchronized (pool.traceWriter) {
-                    try {
-                        pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
-                    } catch (IOException e) {
-                        // should never happen
-                    }
-                }
-                lastWrite = time;
-                traceEventPos = 0;
-            }
-
-            // All glory to hypno-toad!
-            U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
-            U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
-            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, System.identityHashCode(task));
-            U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
-            traceEventPos += CHUNK_SIZE;
-        }
-
         // Unsafe mechanics
         private static final sun.misc.Unsafe U;
         private static final long RUNSTATE;
@@ -1067,7 +1032,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         static {
             int s;
             try {
-                U = sun.misc.Unsafe.getUnsafe();
+                U = getUnsafe();
                 Class<?> k = WorkQueue.class;
                 Class<?> ak = ForkJoinTask[].class;
                 RUNSTATE = U.objectFieldOffset
@@ -1082,13 +1047,6 @@ public class ForkJoinPool extends AbstractExecutorService {
             ASHIFT = 31 - Integer.numberOfLeadingZeros(s);
         }
     }
-
-    protected void registerEvent(EventType event, ForkJoinTask<?> task) {
-        Thread caller = Thread.currentThread();
-        if (caller instanceof ForkJoinWorkerThread)
-            ((ForkJoinWorkerThread)caller).workQueue.registerEvent(event, task);
-    }
-
     /**
      * Per-thread records for threads that submit to pools. Currently
      * holds only pseudo-random seed / index that is used to choose
@@ -1199,17 +1157,6 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     private static final int SEED_INCREMENT = 0x61c88647;
 
-    private static final boolean TRACE = Boolean.getBoolean("java.util.concurrent.ForkJoinPool.trace");
-    private static final String TRACE_LOG = System.getProperty("java.util.concurrent.ForkJoinPool.traceLog", "forkjoin.trace");
-    private static final int BUFFER_LIMIT = Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferSize", 1024*1024);
-    private static final long BUFFER_TIME = TimeUnit.MILLISECONDS.toNanos(Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferTimeMsec", 1000));
-
-
-    static {
-        System.err.println("Using instrumented ForkJoinPool");
-        System.err.println(TRACE ? "Tracing enabled, logging to " + TRACE_LOG + " with per-worker buffers of " + (BUFFER_LIMIT / 1024) + "Kb" : "Tracing is disabled");
-    }
-
     /**
      * Bits and masks for control variables
      *
@@ -1313,7 +1260,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     final AtomicLong stealCount;               // collect counts when terminated
     final AtomicInteger nextWorkerNumber;      // to create worker name string
     final String workerNamePrefix;             // to create worker name string
-    final OutputStream traceWriter;             // trace writer
 
     //  Creating, registering, and deregistering workers
 
@@ -1443,7 +1389,6 @@ public class ForkJoinPool extends AbstractExecutorService {
      * @param task the task. Caller must ensure non-null.
      */
     private void doSubmit(ForkJoinTask<?> task) {
-        registerEvent(EventType.SUBMIT, task);
         Submitter s = submitters.get();
         for (int r = s.seed, m = submitMask;;) {
             WorkQueue[] ws; WorkQueue q;
@@ -1530,7 +1475,6 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     final void runWorker(WorkQueue w) {
         w.growArray(false);         // initialize queue array in this thread
-        w.registerEvent(EventType.UNPARK, null);
         do { w.runTask(scan(w)); } while (w.runState >= 0);
     }
 
@@ -1645,12 +1589,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                 else {
                     Thread.interrupted();     // clear status
                     Thread wt = Thread.currentThread();
-                    registerEvent(EventType.PARK, null);
                     U.putObject(wt, PARKBLOCKER, this);
                     w.parker = wt;            // emulate LockSupport.park
                     if (w.eventCount < 0)     // recheck
                         U.park(false, 0L);
-                    registerEvent(EventType.UNPARK, null);
                     w.parker = null;
                     U.putObject(wt, PARKBLOCKER, null);
                 }
@@ -1681,10 +1623,8 @@ public class ForkJoinPool extends AbstractExecutorService {
                 Thread.interrupted();  // timed variant of version in scan()
                 U.putObject(wt, PARKBLOCKER, this);
                 w.parker = wt;
-                registerEvent(EventType.PARK, null);
                 if (ctl == currentCtl)
                     U.park(false, SHRINK_RATE);
-                registerEvent(EventType.UNPARK, null);
                 w.parker = null;
                 U.putObject(wt, PARKBLOCKER, null);
                 if (ctl != currentCtl)
@@ -1856,9 +1796,8 @@ public class ForkJoinPool extends AbstractExecutorService {
                         if (w.eventCount == (e | INT_SIGN) &&
                             U.compareAndSwapLong(this, CTL, c, nc)) {
                             w.eventCount = (e + E_SEQ) & E_MASK;
-                            if ((p = w.parker) != null) {
+                            if ((p = w.parker) != null)
                                 U.unpark(p);
-                            }
                             return true;
                         }
                     }
@@ -1904,12 +1843,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                         if (task.trySetSignal()) {
                             synchronized (task) {
                                 if (task.status >= 0) {
-                                    registerEvent(EventType.PARK, task);
                                     try {                // see ForkJoinTask
                                         task.wait();     //  for explanation
                                     } catch (InterruptedException ie) {
                                     }
-                                    registerEvent(EventType.UNPARK, task);
                                 }
                                 else
                                     task.notifyAll();
@@ -2231,17 +2168,6 @@ public class ForkJoinPool extends AbstractExecutorService {
         lock.lock();
         this.runState = 1;              // set init flag
         lock.unlock();
-
-        if (TRACE) {
-            try {
-                traceWriter = new FileOutputStream(TRACE_LOG);
-            } catch (IOException e) {
-                // FIXME: Should not throw exception here?
-                throw new IllegalStateException(e);
-            }
-        } else {
-            traceWriter = null;
-        }
     }
 
     // Execution methods
@@ -2368,7 +2294,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         // Workaround needed because method wasn't declared with
         // wildcards in return type but should have been.
         @SuppressWarnings({"unchecked", "rawtypes"})
-        List<Future<T>> futures = (List<Future<T>>) (List) fs;
+            List<Future<T>> futures = (List<Future<T>>) (List) fs;
 
         boolean done = false;
         try {
@@ -2682,12 +2608,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     public void shutdown() {
         checkPermission();
         tryTerminate(false, true);
-        if (traceWriter != null)
-            try {
-                traceWriter.close();
-            } catch (IOException e) {
-                // do nothing
-            }
     }
 
     /**
@@ -2709,12 +2629,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     public List<Runnable> shutdownNow() {
         checkPermission();
         tryTerminate(true, true);
-        if (traceWriter != null)
-            try {
-                traceWriter.close();
-            } catch (IOException e) {
-                // do nothing
-            }
         return Collections.emptyList();
     }
 
@@ -2915,7 +2829,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     private static final long PARKBLOCKER;
     private static final int ABASE;
     private static final int ASHIFT;
-    private static final long BBASE;
 
     static {
         poolNumberGenerator = new AtomicInteger();
@@ -2926,7 +2839,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         submitters = new ThreadSubmitter();
         int s;
         try {
-            U = sun.misc.Unsafe.getUnsafe();
+            U = getUnsafe();
             Class<?> k = ForkJoinPool.class;
             Class<?> ak = ForkJoinTask[].class;
             CTL = U.objectFieldOffset
@@ -2935,7 +2848,6 @@ public class ForkJoinPool extends AbstractExecutorService {
             PARKBLOCKER = U.objectFieldOffset
                 (tk.getDeclaredField("parkBlocker"));
             ABASE = U.arrayBaseOffset(ak);
-            BBASE = U.arrayBaseOffset(byte[].class);
             s = U.arrayIndexScale(ak);
         } catch (Exception e) {
             throw new Error(e);
@@ -2943,6 +2855,34 @@ public class ForkJoinPool extends AbstractExecutorService {
         if ((s & (s-1)) != 0)
             throw new Error("data type scale not a power of two");
         ASHIFT = 31 - Integer.numberOfLeadingZeros(s);
+    }
+
+    /**
+     * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
+     * Replace with a simple call to Unsafe.getUnsafe when integrating
+     * into a jdk.
+     *
+     * @return a sun.misc.Unsafe
+     */
+    private static sun.misc.Unsafe getUnsafe() {
+        try {
+            return sun.misc.Unsafe.getUnsafe();
+        } catch (SecurityException se) {
+            try {
+                return java.security.AccessController.doPrivileged
+                    (new java.security
+                     .PrivilegedExceptionAction<sun.misc.Unsafe>() {
+                        public sun.misc.Unsafe run() throws Exception {
+                            java.lang.reflect.Field f = sun.misc
+                                .Unsafe.class.getDeclaredField("theUnsafe");
+                            f.setAccessible(true);
+                            return (sun.misc.Unsafe) f.get(null);
+                        }});
+            } catch (java.security.PrivilegedActionException e) {
+                throw new RuntimeException("Could not initialize intrinsics",
+                                           e.getCause());
+            }
+        }
     }
 
 }
