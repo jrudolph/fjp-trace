@@ -1,0 +1,38 @@
+Instrumented Fork/Join implementation
+--------------------------------------------------------------
+
+This implementation is based on JSR 166 by Doug Lea. The baseline version is available either in JDK 7+,
+or JSR-166 concurrency interest: http://g.oswego.edu/dl/concurrency-interest/
+
+QUICK START:
+
+ 1. Build the distribution
+   $ mvn clean install
+
+   This will generate target/fjp-trace.jar, which is the one and only artifact for this project.
+
+ 2. Get the trace by running your application with fjp-trace bootclasspath'ed:
+   $ java -Xbootclasspath/p:fjp-trace.jar ...
+
+   You should see something like "Using instrumented ForkJoinPool" in stdout, which will tell if bootclasspath was successful.
+   Try to run your application in this mode first, this does not enable any new functionality.
+
+ 3. Enable tracing and run again
+   $ java -Xbootclasspath/p:fjp-trace.jar -Djava.util.concurrent.ForkJoinPool.trace=true ...
+
+   This will generate trace dump. You can override trace dump location via -Djava.util.concurrent.ForkJoinPool.traceLog=#
+
+ 4. Parse the trace:
+   $ java -jar fjp-trace <trace file>
+
+   You can also use:
+     -Dwidth=#, -Dheight=# to override image size
+     -Dtrace.text to override text file name
+     -Dtrace.graph to override graph file name
+     -Doffset=N to skip N records
+     -Dlimit=M to process only M records
+
+BUGS?
+
+Send bugreports to aleksey.shipilev@gmail.com
+
