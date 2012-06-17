@@ -2376,7 +2376,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         // Workaround needed because method wasn't declared with
         // wildcards in return type but should have been.
         @SuppressWarnings({"unchecked", "rawtypes"})
-        List<Future<T>> futures = (List<Future<T>>) (List) fs;
+           List<Future<T>> futures = (List<Future<T>>) (List) fs;
 
         boolean done = false;
         try {
