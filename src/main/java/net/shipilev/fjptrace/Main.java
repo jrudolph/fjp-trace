@@ -506,7 +506,7 @@ public class Main {
      */
     public enum WorkerStatusJN {
         /**
-         * Executing its own tasks
+         * Not joining any other tasks
          */
         FREE,
 
