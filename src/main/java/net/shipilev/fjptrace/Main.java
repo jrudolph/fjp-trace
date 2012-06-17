@@ -21,13 +21,10 @@ import sun.misc.Unsafe;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -268,14 +264,14 @@ public class Main {
                 }
             case RUNNING:
                 switch (jnStatus) {
-                    case OWN:
+                    case FREE:
                         switch (pkStatus) {
                             case ACTIVE:
                                 return Color.GREEN;
                             case PARKED:
                                 return Color.MAGENTA;
                         }
-                    case HELPING:
+                    case JOINING:
                         switch (pkStatus) {
                             case ACTIVE:
                                 return Color.BLUE;
@@ -298,19 +294,19 @@ public class Main {
                 }
             case RUNNING:
                 switch (jnStatus) {
-                    case OWN:
+                    case FREE:
                         switch (pkStatus) {
                             case ACTIVE:
                                 return "*** exec ***";
                             case PARKED:
-                                return "--- exec (parked) ---";
+                                return "--- wait ---";
                         }
-                    case HELPING:
+                    case JOINING:
                         switch (pkStatus) {
                             case ACTIVE:
-                                return "*** help ***";
+                                return "*** joining ***";
                             case PARKED:
-                                return "--- help (parked) ---";
+                                return "--- wait ---";
                         }
                 }
         }
@@ -328,19 +324,19 @@ public class Main {
                 }
             case RUNNING:
                 switch (jnStatus) {
-                    case OWN:
+                    case FREE:
                         switch (pkStatus) {
                             case ACTIVE:
                                 return "Executing local task, running";
                             case PARKED:
-                                return "Executing local task, parked while waiting";
+                                return "Executing local task, parked on waiting";
                         }
-                    case HELPING:
+                    case JOINING:
                         switch (pkStatus) {
                             case ACTIVE:
-                                return "Joined local task, helping others, executing non-local task";
+                                return "Joining task, executing another task";
                             case PARKED:
-                                return "Joined local task, helping others, parked while waiting";
+                                return "Joining task, executing another task, parked on waiting";
                         }
                 }
         }
@@ -427,7 +423,7 @@ public class Main {
             jnTimelines.put(w, vJN);
             vBL.add(baseTime, WorkerStatusBL.IDLE);
             vPK.add(baseTime, WorkerStatusPK.PARKED);
-            vJN.add(baseTime, WorkerStatusJN.OWN);
+            vJN.add(baseTime, WorkerStatusJN.FREE);
         }
 
         Multiset<Worker> execDepth = new Multiset<>();
@@ -460,13 +456,13 @@ public class Main {
 
                         case JOIN:
                             jnDepth.add(w);
-                            jnTimelines.get(w).add(e.time, WorkerStatusJN.HELPING);
+                            jnTimelines.get(w).add(e.time, WorkerStatusJN.JOINING);
                             break;
 
                         case JOINED:
                             jnDepth.remove(w, 1);
                             if (!jnDepth.contains(w)) {
-                                jnTimelines.get(w).add(e.time, WorkerStatusJN.OWN);
+                                jnTimelines.get(w).add(e.time, WorkerStatusJN.FREE);
                             }
                             break;
                     }
@@ -512,12 +508,12 @@ public class Main {
         /**
          * Executing its own tasks
          */
-        OWN,
+        FREE,
 
         /**
          * Helping to execute other tasks
          */
-        HELPING,
+        JOINING,
     }
 
 }
