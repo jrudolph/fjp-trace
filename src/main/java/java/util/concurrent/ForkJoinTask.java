@@ -647,7 +647,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public final ForkJoinTask<V> fork() {
         registerEvent(EventType.FORK);
-        ((ForkJoinWorkerThread) Thread.currentThread()).workQueue.push(this);
+        ((ForkJoinWorkerThread)Thread.currentThread()).workQueue.push(this);
         return this;
     }
 
@@ -1099,7 +1099,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public static void helpQuiesce() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         wt.pool.helpQuiescePool(wt.workQueue);
     }
 
@@ -1168,7 +1168,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return {@code true} if unforked
      */
     public boolean tryUnfork() {
-        return ((ForkJoinWorkerThread) Thread.currentThread())
+        return ((ForkJoinWorkerThread)Thread.currentThread())
             .workQueue.tryUnpush(this);
     }
 
@@ -1254,7 +1254,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
          * (#idle/#active) threads.
          */
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         return wt.workQueue.queueSize() - wt.pool.idlePerActive();
     }
 
@@ -1357,7 +1357,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     protected static ForkJoinTask<?> pollTask() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread) Thread.currentThread();
+            (ForkJoinWorkerThread)Thread.currentThread();
         return wt.pool.nextTaskFor(wt.workQueue);
     }
 
