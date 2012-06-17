@@ -4,7 +4,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package jsr166y;
+package java.util.concurrent;
 
 /**
  * A thread managed by a {@link ForkJoinPool}, which executes
@@ -116,4 +116,3 @@ public class ForkJoinWorkerThread extends Thread {
         }
     }
 }
-

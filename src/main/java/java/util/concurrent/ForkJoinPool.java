@@ -4,7 +4,8 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package jsr166y;
+package java.util.concurrent;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1032,7 +1033,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         static {
             int s;
             try {
-                U = getUnsafe();
+                U = sun.misc.Unsafe.getUnsafe();
                 Class<?> k = WorkQueue.class;
                 Class<?> ak = ForkJoinTask[].class;
                 RUNSTATE = U.objectFieldOffset
@@ -1047,6 +1048,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             ASHIFT = 31 - Integer.numberOfLeadingZeros(s);
         }
     }
+
     /**
      * Per-thread records for threads that submit to pools. Currently
      * holds only pseudo-random seed / index that is used to choose
@@ -2839,7 +2841,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         submitters = new ThreadSubmitter();
         int s;
         try {
-            U = getUnsafe();
+            U = sun.misc.Unsafe.getUnsafe();
             Class<?> k = ForkJoinPool.class;
             Class<?> ak = ForkJoinTask[].class;
             CTL = U.objectFieldOffset
@@ -2855,34 +2857,6 @@ public class ForkJoinPool extends AbstractExecutorService {
         if ((s & (s-1)) != 0)
             throw new Error("data type scale not a power of two");
         ASHIFT = 31 - Integer.numberOfLeadingZeros(s);
-    }
-
-    /**
-     * Returns a sun.misc.Unsafe.  Suitable for use in a 3rd party package.
-     * Replace with a simple call to Unsafe.getUnsafe when integrating
-     * into a jdk.
-     *
-     * @return a sun.misc.Unsafe
-     */
-    private static sun.misc.Unsafe getUnsafe() {
-        try {
-            return sun.misc.Unsafe.getUnsafe();
-        } catch (SecurityException se) {
-            try {
-                return java.security.AccessController.doPrivileged
-                    (new java.security
-                     .PrivilegedExceptionAction<sun.misc.Unsafe>() {
-                        public sun.misc.Unsafe run() throws Exception {
-                            java.lang.reflect.Field f = sun.misc
-                                .Unsafe.class.getDeclaredField("theUnsafe");
-                            f.setAccessible(true);
-                            return (sun.misc.Unsafe) f.get(null);
-                        }});
-            } catch (java.security.PrivilegedActionException e) {
-                throw new RuntimeException("Could not initialize intrinsics",
-                                           e.getCause());
-            }
-        }
     }
 
 }
