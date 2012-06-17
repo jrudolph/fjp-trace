@@ -6,7 +6,12 @@
 
 package java.util.concurrent;
 
+import net.shipilev.fjptrace.EventType;
+
 import java.io.Serializable;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
@@ -258,6 +263,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     final int doExec() {
         int s; boolean completed;
+        registerEvent(EventType.EXEC);
         if ((s = status) >= 0) {
             try {
                 completed = exec();
@@ -267,6 +273,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             if (completed)
                 s = setCompletion(NORMAL);
         }
+        registerEvent(EventType.EXECED);
         return s;
     }
 
@@ -357,6 +364,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     private int doInvoke() {
         int s; Thread t; ForkJoinWorkerThread wt;
+        registerEvent(EventType.INVOKE);
         if ((s = doExec()) >= 0) {
             if ((t = Thread.currentThread()) instanceof ForkJoinWorkerThread)
                 s = (wt = (ForkJoinWorkerThread)t).pool.awaitJoin(wt.workQueue,
@@ -364,6 +372,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             else
                 s = externalAwaitDone();
         }
+        registerEvent(EventType.INVOKED);
         return s;
     }
 
@@ -637,7 +646,8 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return {@code this}, to simplify usage
      */
     public final ForkJoinTask<V> fork() {
-        ((ForkJoinWorkerThread)Thread.currentThread()).workQueue.push(this);
+        registerEvent(EventType.FORK);
+        ((ForkJoinWorkerThread) Thread.currentThread()).workQueue.push(this);
         return this;
     }
 
@@ -654,9 +664,21 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public final V join() {
         int s;
-        if ((s = doJoin() & DONE_MASK) != NORMAL)
-            reportException(s);
-        return getRawResult();
+        registerEvent(EventType.JOIN);
+        try {
+            if ((s = doJoin() & DONE_MASK) != NORMAL)
+                reportException(s);
+            return getRawResult();
+        } finally {
+            registerEvent(EventType.JOINED);
+        }
+    }
+
+    private void registerEvent(EventType event) {
+        Thread caller = Thread.currentThread();
+        if (caller instanceof ForkJoinWorkerThread) {
+            ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, this);
+        }
     }
 
     /**
@@ -1077,7 +1099,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public static void helpQuiesce() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread)Thread.currentThread();
+            (ForkJoinWorkerThread) Thread.currentThread();
         wt.pool.helpQuiescePool(wt.workQueue);
     }
 
@@ -1146,7 +1168,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return {@code true} if unforked
      */
     public boolean tryUnfork() {
-        return ((ForkJoinWorkerThread)Thread.currentThread())
+        return ((ForkJoinWorkerThread) Thread.currentThread())
             .workQueue.tryUnpush(this);
     }
 
@@ -1232,7 +1254,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
          * (#idle/#active) threads.
          */
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread)Thread.currentThread();
+            (ForkJoinWorkerThread) Thread.currentThread();
         return wt.workQueue.queueSize() - wt.pool.idlePerActive();
     }
 
@@ -1335,7 +1357,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     protected static ForkJoinTask<?> pollTask() {
         ForkJoinWorkerThread wt =
-            (ForkJoinWorkerThread)Thread.currentThread();
+            (ForkJoinWorkerThread) Thread.currentThread();
         return wt.pool.nextTaskFor(wt.workQueue);
     }
 
