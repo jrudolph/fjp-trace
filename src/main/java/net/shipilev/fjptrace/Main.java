@@ -469,45 +469,44 @@ public class Main {
 
         for (Event e : events) {
             switch (e.eventType) {
-                case JOIN:
-                    Integer currentTask = currentExec.get(e.worker);
-                    parentTasks.put(e.taskHC, currentTask);
-
-                    // about to leave parent
-                    Long start = lastSelfTime.remove(currentTask);
-                    if (start == null) continue;
-                    timings.add(currentTask, (int)(e.time - start));
-
-                    break;
-
-                case JOINED:
-                    Integer parent = parentTasks.remove(e.taskHC);
-
-                    // getting back to parent
-                    lastSelfTime.put(parent, e.time);
-                    currentExec.put(e.worker, parent);
-
-                    break;
-
                 case EXEC:
+                    Integer currentTask = currentExec.get(e.worker);
+
+                    if (currentTask != null) {
+                        // about to leave parent
+                        parentTasks.put(e.taskHC, currentTask);
+
+                        Long start = lastSelfTime.remove(currentTask);
+                        if (start == null) continue;
+                        timings.add(currentTask, (int)(e.time - start));
+                    }
+
                     // start executing
                     lastSelfTime.put(e.taskHC, e.time);
                     currentExec.put(e.worker, e.taskHC);
-
                     execTime.put(e.taskHC, e.time);
 
                     break;
 
                 case EXECED:
+
+                    // count remaining self time
                     Long s = lastSelfTime.remove(e.taskHC);
                     if (s == null) continue;
                     timings.add(e.taskHC, (int)(e.time - s));
-                    int count = timings.count(e.taskHC);
-                    selfDurations.put(e.time, count);
+                    selfDurations.put(e.time, timings.count(e.taskHC));
 
+                    // count the time
                     Long s1 = execTime.remove(e.taskHC);
                     if (s1 == null) continue;
                     execDurations.put(e.time, (int)(e.time - s1));
+
+                    Integer parent = parentTasks.remove(e.taskHC);
+                    if (parent != null) {
+                        // getting back to parent
+                        lastSelfTime.put(parent, e.time);
+                        currentExec.put(e.worker, parent);
+                    }
 
                     break;
             }
