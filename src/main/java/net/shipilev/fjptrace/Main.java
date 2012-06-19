@@ -63,11 +63,11 @@ public class Main {
     private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
 
     private List<Event> events = new ArrayList<>();
-    private SortedSet<Worker> workers = new TreeSet<>();
+    private SortedSet<Long> workers = new TreeSet<>();
 
-    private Map<Worker,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
-    private Map<Worker,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
-    private Map<Worker,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
+    private Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
+    private Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
+    private Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
     private final static Unsafe U;
     private final static long BBASE;
     private long start;
@@ -123,13 +123,12 @@ public class Main {
                 continue;
             }
 
-            Worker worker = Worker.newInstance(threadID);
-            Event event = new Event(time - basetime, EventType.values()[eventOrd], worker, taskHC);
+            Event event = new Event(time - basetime, EventType.values()[eventOrd], threadID, taskHC);
             if (!events.add(event)) {
                 throw new IllegalStateException("Duplicate event: " + event);
             }
 
-            workers.add(worker);
+            workers.add(threadID);
         }
 
         if (events.isEmpty()) {
@@ -200,7 +199,7 @@ public class Main {
             List<Color> colors = new ArrayList<>();
 
             int wIndex = 0;
-            for (Worker w : workers) {
+            for (long w : workers) {
                 WorkerStatusBL blStatus = blTimelines.get(w).getStatus(tick);
                 WorkerStatusPK pkStatus = pkTimelines.get(w).getStatus(tick);
                 WorkerStatusJN jnStatus = jnTimelines.get(w).getStatus(tick);
@@ -379,8 +378,8 @@ public class Main {
         pw.println("Total events: "  + events.size());
 
         pw.format("%10s", "Time, ms");
-        for (Worker w : workers) {
-            pw.format("%20s", w.id);
+        for (long w : workers) {
+            pw.format("%20s", w);
         }
         pw.println();
 
@@ -388,8 +387,8 @@ public class Main {
             pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
 //            pw.format("%10d", e.time);
 
-            for (Worker w : workers) {
-                if (w.equals(e.worker)) {
+            for (long w : workers) {
+                if (w == e.workerId) {
                     pw.format("%20s", e.eventType + "(" + e.taskHC + ")");
                 } else {
                     WorkerStatusBL statusBL = blTimelines.get(w).getStatus(e.time);
@@ -471,7 +470,7 @@ public class Main {
         selfDurations = new Multimap<Long, Integer>();
         execDurations = new Multimap<Long, Integer>();
 
-        Map<Worker, Integer> currentExec = new HashMap<>();
+        Map<Long, Integer> currentExec = new HashMap<>();
         Map<Integer, Integer> parentTasks = new HashMap<>();
 
         Multiset<Integer> timings = new Multiset<>();
@@ -479,7 +478,7 @@ public class Main {
         for (Event e : events) {
             switch (e.eventType) {
                 case EXEC:
-                    Integer currentTask = currentExec.get(e.worker);
+                    Integer currentTask = currentExec.get(e.workerId);
 
                     if (currentTask != null) {
                         // about to leave parent
@@ -492,7 +491,7 @@ public class Main {
 
                     // start executing
                     lastSelfTime.put(e.taskHC, e.time);
-                    currentExec.put(e.worker, e.taskHC);
+                    currentExec.put(e.workerId, e.taskHC);
                     execTime.put(e.taskHC, e.time);
 
                     break;
@@ -514,7 +513,7 @@ public class Main {
                     if (parent != null) {
                         // getting back to parent
                         lastSelfTime.put(parent, e.time);
-                        currentExec.put(e.worker, parent);
+                        currentExec.put(e.workerId, parent);
                     }
 
                     break;
@@ -525,7 +524,7 @@ public class Main {
     private void computeWorkerStatus() {
         System.out.println("Computing worker status");
 
-        for (Worker w : workers) {
+        for (long w : workers) {
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
             Timeline<WorkerStatusPK> vPK = new Timeline<>();
             Timeline<WorkerStatusJN> vJN = new Timeline<>();
@@ -537,12 +536,12 @@ public class Main {
             vJN.add(-1, WorkerStatusJN.FREE);
         }
 
-        Multiset<Worker> execDepth = new Multiset<>();
-        Multiset<Worker> jnDepth = new Multiset<>();
+        Multiset<Long> execDepth = new Multiset<>();
+        Multiset<Long> jnDepth = new Multiset<>();
 
         for (Event e : events) {
-            for (Worker w : workers) {
-                if (w.equals(e.worker)) {
+            for (long w : workers) {
+                if (w == e.workerId) {
 
                     switch (e.eventType) {
                         case EXEC:

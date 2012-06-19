@@ -19,13 +19,13 @@ package net.shipilev.fjptrace;
 public class Event implements Comparable<Event> {
     public final long time;
     public final EventType eventType;
-    public final Worker worker;
+    public final long workerId;
     public final int taskHC;
 
-    public Event(Long time, EventType eventType, Worker worker, int taskHC) {
+    public Event(Long time, EventType eventType, long workerId, int taskHC) {
         this.time = time;
         this.eventType = eventType;
-        this.worker = worker;
+        this.workerId = workerId;
         this.taskHC = taskHC;
     }
 
@@ -49,7 +49,7 @@ public class Event implements Comparable<Event> {
         if (taskHC != event.taskHC) {
             return false;
         }
-        if (worker != null ? !worker.equals(event.worker) : event.worker != null) {
+        if (workerId != event.workerId) {
             return false;
         }
 
@@ -63,7 +63,7 @@ public class Event implements Comparable<Event> {
         if (r != 0)
             return r;
 
-        int r1 = Long.compare(o1.worker.id, o2.worker.id);
+        int r1 = Long.compare(o1.workerId, o2.workerId);
         if (r1 != 0)
             return r1;
 
@@ -82,7 +82,7 @@ public class Event implements Comparable<Event> {
     public int hashCode() {
         int result = (int) (time ^ (time >>> 32));
         result = 31 * result + (eventType != null ? eventType.hashCode() : 0);
-        result = 31 * result + (worker != null ? worker.hashCode() : 0);
+        result = 31 * result + (int)(workerId ^ (workerId >>> 32));
         result = 31 * result + taskHC;
         return result;
     }
