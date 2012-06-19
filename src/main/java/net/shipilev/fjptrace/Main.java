@@ -187,6 +187,9 @@ public class Main {
         for (Timeline t : pkTimelines.values()) {
             times.addAll(t.getTimes());
         }
+        for (Timeline t : jnTimelines.values()) {
+            times.addAll(t.getTimes());
+        }
 
         /*
            Render it!
