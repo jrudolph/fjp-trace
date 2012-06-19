@@ -101,13 +101,15 @@ public class Main {
 
         byte[] buffer = new byte[22];
 
-        int count = 0;
+        long basetime = 0;
+        int count = -1;
         while (is.read(buffer) == 22) {
+
             count++;
-            if (count < OFFSET) {
+            if (count < OFFSET && count != 0) {
                 continue;
             }
-            if (count > OFFSET + LIMIT) {
+            if (count - LIMIT >= OFFSET) {
                 break;
             }
 
@@ -116,15 +118,26 @@ public class Main {
             int taskHC = U.getInt(buffer, BBASE + 10);
             long threadID = U.getLong(buffer, BBASE + 14);
 
-            Worker worker = Worker.newInstance(threadID);
+            if (OFFSET > 0 && count == 1) {
+                basetime = time;
+                continue;
+            }
 
-            Event event = new Event(time, EventType.values()[eventOrd], worker, taskHC);
+            Worker worker = Worker.newInstance(threadID);
+            Event event = new Event(time - basetime, EventType.values()[eventOrd], worker, taskHC);
             if (!events.add(event)) {
                 throw new IllegalStateException("Duplicate event: " + event);
             }
 
             workers.add(worker);
         }
+
+        if (events.isEmpty()) {
+            System.out.println("No events in the log");
+            return;
+        }
+
+        System.out.println(events.size() + " events read");
 
         Collections.sort(events);
 
@@ -232,7 +245,7 @@ public class Main {
         for (long tick = start; tick < end; tick += step) {
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - start) / (end - start));
             g.drawLine(10, cY, WIDTH - 10, cY);
-            g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick - start)), 10, cY - 3);
+            g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick)), 10, cY - 3);
         }
 
         /**
@@ -365,8 +378,6 @@ public class Main {
 
         pw.println("Total events: "  + events.size());
 
-        long baseTime = events.iterator().next().time;
-
         pw.format("%10s", "Time, ms");
         for (Worker w : workers) {
             pw.format("%20s", w.id);
@@ -374,7 +385,7 @@ public class Main {
         pw.println();
 
         for (Event e : events) {
-            pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time - baseTime));
+            pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
 //            pw.format("%10d", e.time);
 
             for (Worker w : workers) {
@@ -403,13 +414,11 @@ public class Main {
     private void renderChart(Multimap<Long, Integer> data, String filename, String chartLabel, String yLabel) throws IOException {
         System.err.println("Rendering " + chartLabel + " to " + filename);
 
-        long baseTime = events.iterator().next().time;
-
         XYSeries series = new XYSeries("");
         for (long time : data.keySet()) {
             for (int dur : data.get(time)) {
                 if (dur > 0) {
-                    series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), (dur), false);
+                    series.add(TimeUnit.NANOSECONDS.toMillis(time), (dur), false);
                 }
             }
         }
@@ -516,7 +525,6 @@ public class Main {
     private void computeWorkerStatus() {
         System.out.println("Computing worker status");
 
-        long baseTime = events.iterator().next().time - 1;
         for (Worker w : workers) {
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
             Timeline<WorkerStatusPK> vPK = new Timeline<>();
@@ -524,9 +532,9 @@ public class Main {
             blTimelines.put(w, vBL);
             pkTimelines.put(w, vPK);
             jnTimelines.put(w, vJN);
-            vBL.add(baseTime, WorkerStatusBL.IDLE);
-            vPK.add(baseTime, WorkerStatusPK.PARKED);
-            vJN.add(baseTime, WorkerStatusJN.FREE);
+            vBL.add(-1, WorkerStatusBL.IDLE);
+            vPK.add(-1, WorkerStatusPK.PARKED);
+            vJN.add(-1, WorkerStatusJN.FREE);
         }
 
         Multiset<Worker> execDepth = new Multiset<>();
