@@ -213,6 +213,12 @@ public class Main {
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - start) / (end - start));
             int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - start) / (end - start));
 
+            // performance: skip rendering over and over again
+            if (cY == lY) {
+                lastTick = tick;
+                continue;
+            }
+
             colors.clear();
 
             int wIndex = 0;
