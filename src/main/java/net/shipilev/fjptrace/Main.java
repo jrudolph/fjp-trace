@@ -16,6 +16,16 @@
 
 package net.shipilev.fjptrace;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYDotRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleEdge;
 import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
@@ -60,6 +70,7 @@ public class Main {
     private final static long BBASE;
     private long start;
     private long end;
+    private Multimap<Long,Integer> execDurations;
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -118,7 +129,9 @@ public class Main {
         end = events.get(events.size() - 1).time;
 
         computeWorkerStatus();
+        computeTaskStatus();
 
+        renderTaskStats();
         renderGraph();
         renderText();
         computeStats();
@@ -344,6 +357,7 @@ public class Main {
     }
 
     private void computeStats() {
+        System.out.println("Computing stats");
 
         Map<Worker, Long> parkedTime = new HashMap<>();
         Map<Worker, Long> parkedSince = new HashMap<>();
@@ -412,7 +426,81 @@ public class Main {
         pw.close();
     }
 
+    private void renderTaskStats() throws IOException {
+        System.out.println("Rendering task stats");
+
+        long baseTime = events.iterator().next().time;
+
+        XYSeries series = new XYSeries("");
+        for (long time : execDurations.keySet()) {
+            for (int dur : execDurations.get(time)) {
+                series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), TimeUnit.NANOSECONDS.toMicros(dur), false);
+            }
+        }
+
+        final XYSeriesCollection dataset = new XYSeriesCollection();
+        dataset.addSeries(series);
+
+        final JFreeChart chart = ChartFactory.createXYLineChart(
+                "Task execution times",
+                "Time, msec", "Execution time, usec",
+                dataset,
+                PlotOrientation.HORIZONTAL,
+                true, true, false
+        );
+
+        chart.setBackgroundPaint(Color.white);
+        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
+
+        final XYPlot plot = chart.getXYPlot();
+        XYDotRenderer renderer = new XYDotRenderer();
+        renderer.setDefaultEntityRadius(3);
+        plot.setRenderer(renderer);
+        plot.setBackgroundPaint(Color.white);
+        plot.setForegroundAlpha(0.65f);
+        plot.setDomainGridlinePaint(Color.gray);
+        plot.setRangeGridlinePaint(Color.gray);
+
+        final ValueAxis domainAxis = plot.getDomainAxis();
+        domainAxis.setTickMarkPaint(Color.black);
+        domainAxis.setLowerMargin(0.0);
+        domainAxis.setUpperMargin(0.0);
+        domainAxis.setInverted(true);
+
+        final ValueAxis rangeAxis = plot.getRangeAxis();
+        rangeAxis.setTickMarkPaint(Color.black);
+
+        ChartUtilities.saveChartAsPNG(new File("exectime.png"), chart, WIDTH, HEIGHT);
+    }
+
+
+    private void computeTaskStatus() {
+        System.out.println("Computing task stats");
+
+        Map<Integer, Long> startTimes = new HashMap<>();
+
+        execDurations = new Multimap<Long, Integer>();
+
+        for (Event e : events) {
+            switch (e.eventType) {
+                case JOIN:
+                    break;
+                case JOINED:
+                    break;
+                case EXEC:
+                    startTimes.put(e.taskHC, e.time);
+                    break;
+                case EXECED:
+                    Long start = startTimes.get(e.taskHC);
+                    if (start == null) continue;
+                    execDurations.put(e.time, (int)(e.time - start));
+            }
+        }
+    }
+
     private void computeWorkerStatus() {
+        System.out.println("Computing worker status");
+
         long baseTime = events.iterator().next().time - 1;
         for (Worker w : workers) {
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
