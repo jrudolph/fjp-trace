@@ -19,6 +19,8 @@ package net.shipilev.fjptrace;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.axis.StandardTickUnitSource;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -134,7 +136,6 @@ public class Main {
         renderTaskStats();
         renderGraph();
         renderText();
-        computeStats();
     }
 
     private void renderGraph() throws IOException {
@@ -356,41 +357,6 @@ public class Main {
         throw new IllegalStateException();
     }
 
-    private void computeStats() {
-        System.out.println("Computing stats");
-
-        Map<Worker, Long> parkedTime = new HashMap<>();
-        Map<Worker, Long> parkedSince = new HashMap<>();
-
-        for (Event e : events) {
-            switch (e.eventType) {
-                case PARK:
-                    parkedSince.put(e.worker, e.time);
-                    break;
-
-                case UNPARK:
-                    Long since = parkedSince.remove(e.worker);
-                    if (since != null) {
-                        Long ex = parkedTime.get(e.worker);
-                        if (ex == null) {
-                            ex = 0L;
-                        }
-                        ex += (e.time - since);
-                        parkedTime.put(e.worker, ex);
-                    }
-                    break;
-            }
-        }
-
-        PrintWriter pw = new PrintWriter(System.out);
-        for (Worker w : workers) {
-            Long parked = parkedTime.get(w);
-            pw.printf("%20s: time parked = %2d ms\n", w.id, (parked != null) ? TimeUnit.NANOSECONDS.toMillis(parked) : 0);
-        }
-
-        pw.close();
-    }
-
     private void renderText() throws FileNotFoundException {
         System.out.println("Rendering text to " + TRACE_TEXT);
 
@@ -434,7 +400,7 @@ public class Main {
         XYSeries series = new XYSeries("");
         for (long time : execDurations.keySet()) {
             for (int dur : execDurations.get(time)) {
-                series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), TimeUnit.NANOSECONDS.toMicros(dur), false);
+                series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), (dur), false);
             }
         }
 
@@ -467,8 +433,11 @@ public class Main {
         domainAxis.setUpperMargin(0.0);
         domainAxis.setInverted(true);
 
-        final ValueAxis rangeAxis = plot.getRangeAxis();
+        final ValueAxis rangeAxis = new LogarithmicAxis("Execution time, nsec");
         rangeAxis.setTickMarkPaint(Color.black);
+        rangeAxis.setStandardTickUnits(new StandardTickUnitSource());
+        plot.setRangeAxis(rangeAxis);
+
 
         ChartUtilities.saveChartAsPNG(new File("exectime.png"), chart, WIDTH, HEIGHT);
     }
