@@ -63,4 +63,9 @@ public class Multiset<T> {
     public boolean contains(T t) {
         return counts.containsKey(t);
     }
+
+    public int count(T t) {
+        Integer v = counts.get(t);
+        return v == null ? 0 : v;
+    }
 }

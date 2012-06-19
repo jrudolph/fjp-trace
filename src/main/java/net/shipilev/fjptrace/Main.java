@@ -72,9 +72,8 @@ public class Main {
     private final static long BBASE;
     private long start;
     private long end;
+    private Multimap<Long,Integer> selfDurations;
     private Multimap<Long,Integer> execDurations;
-    private Multimap<Long,Integer> queueDurations;
-    private Multimap<Long,Integer> transitDurations;
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -137,7 +136,7 @@ public class Main {
 
         renderTaskStats();
         renderGraph();
-        renderText();
+//        renderText();
     }
 
     private void renderGraph() throws IOException {
@@ -397,9 +396,8 @@ public class Main {
     private void renderTaskStats() throws IOException {
         System.out.println("Rendering task stats");
 
-        renderChart(execDurations, "exectime.png", "Task execution times", "Time to execute, nsec");
-        renderChart(queueDurations, "queuetime.png", "Time spent in local queue", "Wait time, nsec");
-        renderChart(transitDurations, "stealtime.png", "Time spent in before stealing", "Wait time, nsec");
+        renderChart(selfDurations, "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, nsec");
+        renderChart(execDurations, "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, nsec");
     }
 
     private void renderChart(Multimap<Long, Integer> data, String filename, String chartLabel, String yLabel) throws IOException {
@@ -458,42 +456,59 @@ public class Main {
     private void computeTaskStatus() {
         System.out.println("Computing task stats");
 
-        Map<Integer, Long> forkTimes = new HashMap<>();
-        Map<Integer, Long> forkers = new HashMap<>();
-        Map<Integer, Long> startTimes = new HashMap<>();
+        Map<Integer, Long> execTime = new HashMap<>();
+        Map<Integer, Long> lastSelfTime = new HashMap<>();
 
+        selfDurations = new Multimap<Long, Integer>();
         execDurations = new Multimap<Long, Integer>();
-        queueDurations = new Multimap<Long, Integer>();
-        transitDurations = new Multimap<Long, Integer>();
+
+        Map<Worker, Integer> currentExec = new HashMap<>();
+        Map<Integer, Integer> parentTasks = new HashMap<>();
+
+        Multiset<Integer> timings = new Multiset<>();
 
         for (Event e : events) {
             switch (e.eventType) {
-                case FORK:
-                    forkers.put(e.taskHC, e.worker.id);
-                    forkTimes.put(e.taskHC, e.time);
-                    break;
-                case EXEC:
-                    startTimes.put(e.taskHC, e.time);
+                case JOIN:
+                    Integer currentTask = currentExec.get(e.worker);
+                    parentTasks.put(e.taskHC, currentTask);
 
-                    Long forker = forkers.remove(e.taskHC);
-                    if (forker == null) continue;
-
-                    Long forkedAt = forkTimes.remove(e.taskHC);
-                    if (forkedAt == null) continue;
-
-                    if (forker == e.worker.id) {
-                        // local task
-                        queueDurations.put(e.time, (int) (e.time - forkedAt));
-                    } else {
-                        // stealed task
-                        transitDurations.put(e.time, (int) (e.time - forkedAt));
-                    }
-
-                    break;
-                case EXECED:
-                    Long start = startTimes.remove(e.taskHC);
+                    // about to leave parent
+                    Long start = lastSelfTime.remove(currentTask);
                     if (start == null) continue;
-                    execDurations.put(e.time, (int)(e.time - start));
+                    timings.add(currentTask, (int)(e.time - start));
+
+                    break;
+
+                case JOINED:
+                    Integer parent = parentTasks.remove(e.taskHC);
+
+                    // getting back to parent
+                    lastSelfTime.put(parent, e.time);
+                    currentExec.put(e.worker, parent);
+
+                    break;
+
+                case EXEC:
+                    // start executing
+                    lastSelfTime.put(e.taskHC, e.time);
+                    currentExec.put(e.worker, e.taskHC);
+
+                    execTime.put(e.taskHC, e.time);
+
+                    break;
+
+                case EXECED:
+                    Long s = lastSelfTime.remove(e.taskHC);
+                    if (s == null) continue;
+                    timings.add(e.taskHC, (int)(e.time - s));
+                    int count = timings.count(e.taskHC);
+                    selfDurations.put(e.time, count);
+
+                    Long s1 = execTime.remove(e.taskHC);
+                    if (s1 == null) continue;
+                    execDurations.put(e.time, (int)(e.time - s1));
+
                     break;
             }
         }
