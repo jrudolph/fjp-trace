@@ -109,29 +109,27 @@ public class Main {
 
         byte[] buffer = new byte[22];
 
-        long basetime = 0;
-        int count = -1;
+        long basetime = Long.MAX_VALUE;
+        int count = 0;
         while (is.read(buffer) == 22) {
 
             count++;
-            if (count < OFFSET && count != 0) {
-                continue;
-            }
-            if (count - LIMIT >= OFFSET) {
-                break;
-            }
-
             long time = U.getLong(buffer, BBASE + 0);
             int eventOrd = U.getShort(buffer, BBASE + 8);
             int taskHC = U.getInt(buffer, BBASE + 10);
             long threadID = U.getLong(buffer, BBASE + 14);
 
-            if (OFFSET > 0 && count == 0) {
-                basetime = time;
+            basetime = Math.min(basetime, time);
+
+            if (count < OFFSET) {
                 continue;
             }
 
-            Event event = new Event(time - basetime, EventType.values()[eventOrd], threadID, taskHC);
+            if (count - LIMIT > OFFSET) {
+                break;
+            }
+
+            Event event = new Event(time, EventType.values()[eventOrd], threadID, taskHC);
             if (!events.add(event)) {
                 throw new IllegalStateException("Duplicate event: " + event);
             }
@@ -145,6 +143,10 @@ public class Main {
         }
 
         System.out.println(events.size() + " events read");
+
+        for (Event event : events) {
+            event.time -= basetime;
+        }
 
         Collections.sort(events);
 

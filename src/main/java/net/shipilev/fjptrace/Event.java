@@ -17,7 +17,7 @@
 package net.shipilev.fjptrace;
 
 public class Event implements Comparable<Event> {
-    public final long time;
+    public long time;
     public final EventType eventType;
     public final long workerId;
     public final int taskHC;
