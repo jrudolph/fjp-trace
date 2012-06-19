@@ -79,8 +79,8 @@ public class Main {
     private final Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
     private final Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
     private final Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
-    private final Multimap<Long,Integer> selfDurations = new Multimap<Long, Integer>();
-    private final Multimap<Long,Integer> execDurations = new Multimap<Long, Integer>();
+    private final PairedList selfDurations = new PairedList();
+    private final PairedList execDurations = new PairedList();
 
     private long start;
     private long end;
@@ -428,16 +428,15 @@ public class Main {
         renderChart(execDurations, "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, nsec");
     }
 
-    private void renderChart(Multimap<Long, Integer> data, String filename, String chartLabel, String yLabel) throws IOException {
+    private void renderChart(PairedList data, String filename, String chartLabel, String yLabel) throws IOException {
         System.err.println("Rendering " + chartLabel + " to " + filename);
 
         XYSeries series = new XYSeries("");
-        for (long time : data.keySet()) {
-            long x = TimeUnit.NANOSECONDS.toMillis(time);
-            for (int dur : data.get(time)) {
-                if (dur > 0) {
-                    series.add(x, dur, false);
-                }
+        for (PairedList.Pair entry : data) {
+            long x = TimeUnit.NANOSECONDS.toMillis(entry.getK1());
+            int dur = entry.getK2();
+            if (dur > 0) {
+                series.add(x, dur, false);
             }
         }
 
@@ -522,13 +521,13 @@ public class Main {
                     Long s = lastSelfTime.remove(e.taskHC);
                     if (s == null) continue;
                     timings.add(e.taskHC, (int)(e.time - s));
-                    selfDurations.put(e.time, timings.count(e.taskHC));
+                    selfDurations.add(e.time, timings.count(e.taskHC));
                     timings.removeKey(e.taskHC);
 
                     // count the time
                     Long s1 = execTime.remove(e.taskHC);
                     if (s1 == null) continue;
-                    execDurations.put(e.time, (int)(e.time - s1));
+                    execDurations.add(e.time, (int)(e.time - s1));
 
                     Integer parent = parentTasks.remove(e.taskHC);
                     if (parent != null) {
