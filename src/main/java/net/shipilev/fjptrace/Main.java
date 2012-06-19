@@ -35,6 +35,7 @@ import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -52,6 +53,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 
 public class Main {
 
@@ -59,7 +61,7 @@ public class Main {
     private static final int WIDTH = Integer.getInteger("width", 1000);
     private static final int OFFSET = Integer.getInteger("offset", 0);
     private static final int LIMIT = Integer.getInteger("limit", Integer.MAX_VALUE);
-    private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log");
+    private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log.gz");
     private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
 
     private final static Unsafe U;
@@ -160,7 +162,7 @@ public class Main {
 
         renderTaskStats();
         renderGraph();
-//        renderText();
+        renderText();
     }
 
     private void renderGraph() throws IOException {
@@ -328,30 +330,31 @@ public class Main {
         throw new IllegalStateException();
     }
 
+    // should be exactly 20 chars
     private String selectText(WorkerStatusBL blStatus, WorkerStatusPK pkStatus, WorkerStatusJN jnStatus) {
         switch (blStatus) {
             case IDLE:
                 switch (pkStatus) {
                     case ACTIVE:
-                        return "--- infra ---";
+                        return "    --- infr ---    ";
                     case PARKED:
-                        return "";
+                        return "                    ";
                 }
             case RUNNING:
                 switch (jnStatus) {
                     case FREE:
                         switch (pkStatus) {
                             case ACTIVE:
-                                return "*** exec ***";
+                                return "    *** exec ***    ";
                             case PARKED:
-                                return "--- wait ---";
+                                return "    --- wait ---    ";
                         }
                     case JOINING:
                         switch (pkStatus) {
                             case ACTIVE:
-                                return "*** joining ***";
+                                return "    *** join ***    ";
                             case PARKED:
-                                return "--- wait ---";
+                                return "    --- wait ---    ";
                         }
                 }
         }
@@ -388,10 +391,10 @@ public class Main {
         throw new IllegalStateException();
     }
 
-    private void renderText() throws FileNotFoundException {
+    private void renderText() throws IOException {
         System.out.println("Rendering text to " + TRACE_TEXT);
 
-        PrintWriter pw = new PrintWriter(new File(TRACE_TEXT));
+        PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(TRACE_TEXT)));
 
         pw.println("Total events: "  + events.size());
 
@@ -413,7 +416,7 @@ public class Main {
                     WorkerStatusPK statusPK = pkTimelines.get(w).getStatus(e.time);
                     WorkerStatusJN statusJN = jnTimelines.get(w).getStatus(e.time);
 
-                    pw.format("%20s", selectText(statusBL, statusPK, statusJN));
+                    pw.print(selectText(statusBL, statusPK, statusJN));
                 }
             }
             pw.println();
