@@ -68,4 +68,8 @@ public class Multiset<T> {
         Integer v = counts.get(t);
         return v == null ? 0 : v;
     }
+
+    public void removeKey(T t) {
+        counts.remove(t);
+    }
 }

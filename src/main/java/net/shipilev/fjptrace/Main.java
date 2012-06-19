@@ -433,9 +433,10 @@ public class Main {
 
         XYSeries series = new XYSeries("");
         for (long time : data.keySet()) {
+            long x = TimeUnit.NANOSECONDS.toMillis(time);
             for (int dur : data.get(time)) {
                 if (dur > 0) {
-                    series.add(TimeUnit.NANOSECONDS.toMillis(time), (dur), false);
+                    series.add(x, dur, false);
                 }
             }
         }
@@ -468,6 +469,8 @@ public class Main {
         domainAxis.setLowerMargin(0.0);
         domainAxis.setUpperMargin(0.0);
         domainAxis.setInverted(true);
+        domainAxis.setLowerBound(TimeUnit.NANOSECONDS.toMillis(start));
+        domainAxis.setUpperBound(TimeUnit.NANOSECONDS.toMillis(end));
 
         final ValueAxis rangeAxis = new LogarithmicAxis(yLabel);
         rangeAxis.setTickMarkPaint(Color.black);
@@ -512,12 +515,15 @@ public class Main {
                     break;
 
                 case EXECED:
+                    // record worker is free
+                    currentExec.remove(e.workerId);
 
                     // count remaining self time
                     Long s = lastSelfTime.remove(e.taskHC);
                     if (s == null) continue;
                     timings.add(e.taskHC, (int)(e.time - s));
                     selfDurations.put(e.time, timings.count(e.taskHC));
+                    timings.removeKey(e.taskHC);
 
                     // count the time
                     Long s1 = execTime.remove(e.taskHC);
