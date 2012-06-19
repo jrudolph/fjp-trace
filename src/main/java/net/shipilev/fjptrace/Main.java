@@ -475,10 +475,10 @@ public class Main {
                 case EXEC:
                     startTimes.put(e.taskHC, e.time);
 
-                    Long forker = forkers.get(e.taskHC);
+                    Long forker = forkers.remove(e.taskHC);
                     if (forker == null) continue;
 
-                    Long forkedAt = forkTimes.get(e.taskHC);
+                    Long forkedAt = forkTimes.remove(e.taskHC);
                     if (forkedAt == null) continue;
 
                     if (forker == e.worker.id) {
@@ -491,7 +491,7 @@ public class Main {
 
                     break;
                 case EXECED:
-                    Long start = startTimes.get(e.taskHC);
+                    Long start = startTimes.remove(e.taskHC);
                     if (start == null) continue;
                     execDurations.put(e.time, (int)(e.time - start));
                     break;
