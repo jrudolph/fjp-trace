@@ -62,6 +62,9 @@ public class Main {
     private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log");
     private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
 
+    private final static Unsafe U;
+    private final static long BBASE;
+
     private static final Color COLOR_GRAY = Color.getHSBColor(0f, 0f, 0.9f);
     private static final Comparator<Color> COLOR_COMPARATOR = new Comparator<Color>() {
         @Override
@@ -70,18 +73,17 @@ public class Main {
         }
     };
 
-    private List<Event> events = new ArrayList<>();
-    private SortedSet<Long> workers = new TreeSet<>();
+    private final List<Event> events = new ArrayList<>();
+    private final SortedSet<Long> workers = new TreeSet<>();
 
-    private Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
-    private Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
-    private Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
-    private final static Unsafe U;
-    private final static long BBASE;
+    private final Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
+    private final Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
+    private final Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
+    private final Multimap<Long,Integer> selfDurations = new Multimap<Long, Integer>();
+    private final Multimap<Long,Integer> execDurations = new Multimap<Long, Integer>();
+
     private long start;
     private long end;
-    private Multimap<Long,Integer> selfDurations;
-    private Multimap<Long,Integer> execDurations;
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -476,9 +478,6 @@ public class Main {
 
         Map<Integer, Long> execTime = new HashMap<>();
         Map<Integer, Long> lastSelfTime = new HashMap<>();
-
-        selfDurations = new Multimap<Long, Integer>();
-        execDurations = new Multimap<Long, Integer>();
 
         Map<Long, Integer> currentExec = new HashMap<>();
         Map<Integer, Integer> parentTasks = new HashMap<>();
