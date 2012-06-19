@@ -73,6 +73,8 @@ public class Main {
     private long start;
     private long end;
     private Multimap<Long,Integer> execDurations;
+    private Multimap<Long,Integer> queueDurations;
+    private Multimap<Long,Integer> transitDurations;
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -395,12 +397,22 @@ public class Main {
     private void renderTaskStats() throws IOException {
         System.out.println("Rendering task stats");
 
+        renderChart(execDurations, "exectime.png", "Task execution times", "Time to execute, nsec");
+        renderChart(queueDurations, "queuetime.png", "Time spent in local queue", "Wait time, nsec");
+        renderChart(transitDurations, "stealtime.png", "Time spent in before stealing", "Wait time, nsec");
+    }
+
+    private void renderChart(Multimap<Long, Integer> data, String filename, String chartLabel, String yLabel) throws IOException {
+        System.err.println("Rendering " + chartLabel + " to " + filename);
+
         long baseTime = events.iterator().next().time;
 
         XYSeries series = new XYSeries("");
-        for (long time : execDurations.keySet()) {
-            for (int dur : execDurations.get(time)) {
-                series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), (dur), false);
+        for (long time : data.keySet()) {
+            for (int dur : data.get(time)) {
+                if (dur > 0) {
+                    series.add(TimeUnit.NANOSECONDS.toMillis(time - baseTime), (dur), false);
+                }
             }
         }
 
@@ -408,8 +420,8 @@ public class Main {
         dataset.addSeries(series);
 
         final JFreeChart chart = ChartFactory.createXYLineChart(
-                "Task execution times",
-                "Time, msec", "Execution time, usec",
+                chartLabel,
+                "Time, msec", yLabel,
                 dataset,
                 PlotOrientation.HORIZONTAL,
                 true, true, false
@@ -433,36 +445,56 @@ public class Main {
         domainAxis.setUpperMargin(0.0);
         domainAxis.setInverted(true);
 
-        final ValueAxis rangeAxis = new LogarithmicAxis("Execution time, nsec");
+        final ValueAxis rangeAxis = new LogarithmicAxis(yLabel);
         rangeAxis.setTickMarkPaint(Color.black);
         rangeAxis.setStandardTickUnits(new StandardTickUnitSource());
         plot.setRangeAxis(rangeAxis);
 
 
-        ChartUtilities.saveChartAsPNG(new File("exectime.png"), chart, WIDTH, HEIGHT);
+        ChartUtilities.saveChartAsPNG(new File(filename), chart, WIDTH, HEIGHT);
     }
 
 
     private void computeTaskStatus() {
         System.out.println("Computing task stats");
 
+        Map<Integer, Long> forkTimes = new HashMap<>();
+        Map<Integer, Long> forkers = new HashMap<>();
         Map<Integer, Long> startTimes = new HashMap<>();
 
         execDurations = new Multimap<Long, Integer>();
+        queueDurations = new Multimap<Long, Integer>();
+        transitDurations = new Multimap<Long, Integer>();
 
         for (Event e : events) {
             switch (e.eventType) {
-                case JOIN:
-                    break;
-                case JOINED:
+                case FORK:
+                    forkers.put(e.taskHC, e.worker.id);
+                    forkTimes.put(e.taskHC, e.time);
                     break;
                 case EXEC:
                     startTimes.put(e.taskHC, e.time);
+
+                    Long forker = forkers.get(e.taskHC);
+                    if (forker == null) continue;
+
+                    Long forkedAt = forkTimes.get(e.taskHC);
+                    if (forkedAt == null) continue;
+
+                    if (forker == e.worker.id) {
+                        // local task
+                        queueDurations.put(e.time, (int) (e.time - forkedAt));
+                    } else {
+                        // stealed task
+                        transitDurations.put(e.time, (int) (e.time - forkedAt));
+                    }
+
                     break;
                 case EXECED:
                     Long start = startTimes.get(e.taskHC);
                     if (start == null) continue;
                     execDurations.put(e.time, (int)(e.time - start));
+                    break;
             }
         }
     }
