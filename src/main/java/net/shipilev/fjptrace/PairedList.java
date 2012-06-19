@@ -60,6 +60,14 @@ public class PairedList implements Iterable<PairedList.Pair> {
         };
     }
 
+    public long[] getAllX() {
+        return k1;
+    }
+
+    public int[] getAllY() {
+        return k2;
+    }
+
     public static class Pair {
         private final long k1;
         private final int k2;

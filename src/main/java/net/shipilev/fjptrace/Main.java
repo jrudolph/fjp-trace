@@ -19,12 +19,14 @@ package net.shipilev.fjptrace;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.AxisSpace;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.axis.StandardTickUnitSource;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYDotRenderer;
+import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RectangleEdge;
@@ -32,12 +34,14 @@ import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -447,15 +451,15 @@ public class Main {
         dataset.addSeries(series);
 
         final JFreeChart chart = ChartFactory.createXYLineChart(
-                chartLabel,
-                "Time, msec", yLabel,
+                "",
+                "Run time, msec", yLabel,
                 dataset,
                 PlotOrientation.HORIZONTAL,
-                true, true, false
+                false, false, false
         );
 
         chart.setBackgroundPaint(Color.white);
-        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
+//        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
 
         final XYPlot plot = chart.getXYPlot();
         XYDotRenderer renderer = new XYDotRenderer();
@@ -479,8 +483,54 @@ public class Main {
         rangeAxis.setStandardTickUnits(new StandardTickUnitSource());
         plot.setRangeAxis(rangeAxis);
 
+        AxisSpace space = new AxisSpace();
+        space.setLeft(50);
 
-        ChartUtilities.saveChartAsPNG(new File(filename), chart, WIDTH, HEIGHT);
+        plot.setFixedDomainAxisSpace(space);
+
+        final HistogramDataset histDataSet = new HistogramDataset();
+        double[] values = new double[data.getAllY().length];
+
+        int c = 0;
+        long min = Integer.MAX_VALUE;
+        long max = Integer.MIN_VALUE;
+        for (long l : data.getAllY()) {
+            if (l <= 0) {
+                continue;
+            }
+            if (l > 50 * 1000 * 1000) {
+                continue;
+            }
+            values[c++] = l;
+            min = Math.min(min, l);
+            max = Math.max(max, l);
+        }
+        histDataSet.addSeries("H1", Arrays.copyOf(values, c), 1000);
+
+        final JFreeChart histChart = ChartFactory.createHistogram(
+                chartLabel,
+                "", "Samples",
+                histDataSet,
+                PlotOrientation.VERTICAL,
+                false, false, false
+        );
+
+        histChart.setBackgroundPaint(Color.white);
+//        histChart.getLegend().setPosition(RectangleEdge.BOTTOM);
+
+        rangeAxis.setAutoRange(false);
+        histChart.getXYPlot().setDomainAxis(rangeAxis);
+        histChart.getXYPlot().setFixedRangeAxisSpace(space);
+
+        BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = bi.createGraphics();
+
+        histChart.draw(graphics, new Rectangle(0, 0, WIDTH, 200));
+        chart.draw(graphics, new Rectangle(0, 200, WIDTH, HEIGHT - 200));
+
+        FileOutputStream out = new FileOutputStream(filename);
+        ChartUtilities.writeBufferedImageAsPNG(out, bi);
+        out.close();
     }
 
 
@@ -505,7 +555,9 @@ public class Main {
                         parentTasks.put(e.taskHC, currentTask);
 
                         Long start = lastSelfTime.remove(currentTask);
-                        if (start == null) continue;
+                        if (start == null) {
+                            continue;
+                        }
                         timings.add(currentTask, (int)(e.time - start));
                     }
 
@@ -522,14 +574,18 @@ public class Main {
 
                     // count remaining self time
                     Long s = lastSelfTime.remove(e.taskHC);
-                    if (s == null) continue;
+                    if (s == null) {
+                        continue;
+                    }
                     timings.add(e.taskHC, (int)(e.time - s));
                     selfDurations.add(e.time, timings.count(e.taskHC));
                     timings.removeKey(e.taskHC);
 
                     // count the time
                     Long s1 = execTime.remove(e.taskHC);
-                    if (s1 == null) continue;
+                    if (s1 == null) {
+                        continue;
+                    }
                     execDurations.add(e.time, (int)(e.time - s1));
 
                     Integer parent = parentTasks.remove(e.taskHC);
