@@ -62,6 +62,14 @@ public class Main {
     private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log");
     private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
 
+    private static final Color COLOR_GRAY = Color.getHSBColor(0f, 0f, 0.9f);
+    private static final Comparator<Color> COLOR_COMPARATOR = new Comparator<Color>() {
+        @Override
+        public int compare(Color o1, Color o2) {
+            return Integer.compare(o1.getRGB(), o2.getRGB());
+        }
+    };
+
     private List<Event> events = new ArrayList<>();
     private SortedSet<Long> workers = new TreeSet<>();
 
@@ -118,7 +126,7 @@ public class Main {
             int taskHC = U.getInt(buffer, BBASE + 10);
             long threadID = U.getLong(buffer, BBASE + 14);
 
-            if (OFFSET > 0 && count == 1) {
+            if (OFFSET > 0 && count == 0) {
                 basetime = time;
                 continue;
             }
@@ -190,13 +198,15 @@ public class Main {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
+        List<Color> colors = new ArrayList<>();
+
         long lastTick = start;
         for (long tick : times) {
 
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - start) / (end - start));
             int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - start) / (end - start));
 
-            List<Color> colors = new ArrayList<>();
+            colors.clear();
 
             int wIndex = 0;
             for (long w : workers) {
@@ -215,12 +225,7 @@ public class Main {
                 wIndex++;
             }
 
-            Collections.sort(colors, new Comparator<Color>() {
-                @Override
-                public int compare(Color o1, Color o2) {
-                    return Integer.compare(o1.getRGB(), o2.getRGB());
-                }
-            });
+            Collections.sort(colors, COLOR_COMPARATOR);
 
             int cIndex = 0;
             for (Color c : colors) {
@@ -287,7 +292,7 @@ public class Main {
                     case ACTIVE:
                         return Color.YELLOW;
                     case PARKED:
-                        return Color.getHSBColor(0f, 0f, 0.9f);
+                        return COLOR_GRAY;
                 }
             case RUNNING:
                 switch (jnStatus) {
