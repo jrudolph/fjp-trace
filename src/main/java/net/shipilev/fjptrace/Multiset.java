@@ -44,7 +44,7 @@ public class Multiset<T> {
     public void remove(T t, int i) {
         Integer count = counts.get(t);
         if (count == null) {
-            throw new IllegalStateException("No elements");
+            return;
         }
 
         count -= i;
