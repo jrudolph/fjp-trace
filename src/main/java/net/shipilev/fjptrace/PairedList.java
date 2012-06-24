@@ -1,22 +1,24 @@
 package net.shipilev.fjptrace;
 
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+
 import java.util.Arrays;
 import java.util.Iterator;
 
 public class PairedList implements Iterable<PairedList.Pair> {
 
     private long[] k1;
-    private int[] k2;
+    private long[] k2;
 
     int size;
     int index;
 
     public PairedList() {
         k1 = new long[1];
-        k2 = new int[1];
+        k2 = new long[1];
     }
 
-    public void add(long v1, int v2) {
+    public void add(long v1, long v2) {
         ensureCapacity(index);
         int slot = index++;
         k1[slot] = v1;
@@ -61,18 +63,36 @@ public class PairedList implements Iterable<PairedList.Pair> {
     }
 
     public long[] getAllX() {
-        return k1;
+        return Arrays.copyOf(k1, index);
     }
 
-    public int[] getAllY() {
-        return k2;
+    public long[] getAllY() {
+        return Arrays.copyOf(k2, index);
+    }
+
+    public PairedList filter(double cutoff) {
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+        for (int i = 0; i < index; i++) {
+            stats.addValue(k2[i]);
+        }
+
+        double lower = stats.getPercentile(cutoff);
+        double upper = stats.getPercentile(100 - cutoff);
+
+        PairedList result = new PairedList();
+        for (int i = 0; i < index; i++) {
+            if (lower <= k2[i] && k2[i] <= upper) {
+                result.add(k1[i], k2[i]);
+            }
+        }
+        return result;
     }
 
     public static class Pair {
         private final long k1;
-        private final int k2;
+        private final long k2;
 
-        public Pair(long k1, int k2) {
+        public Pair(long k1, long k2) {
             this.k1 = k1;
             this.k2 = k2;
         }
@@ -81,7 +101,7 @@ public class PairedList implements Iterable<PairedList.Pair> {
             return k1;
         }
 
-        public int getK2() {
+        public long getK2() {
             return k2;
         }
     }

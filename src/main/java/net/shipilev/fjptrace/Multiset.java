@@ -26,23 +26,23 @@ import java.util.HashMap;
  */
 public class Multiset<T> {
 
-    private final HashMap<T, Integer> counts = new HashMap<>();
+    private final HashMap<T, Long> counts = new HashMap<>();
 
     public void add(T t) {
         add(t, 1);
     }
 
-    public void add(T t, int inc) {
-        Integer count = counts.get(t);
+    public void add(T t, long inc) {
+        Long count = counts.get(t);
         if (count == null) {
-            count = 0;
+            count = 0L;
         }
         count += inc;
         counts.put(t, count);
     }
 
-    public void remove(T t, int i) {
-        Integer count = counts.get(t);
+    public void remove(T t, long i) {
+        Long count = counts.get(t);
         if (count == null) {
             return;
         }
@@ -64,8 +64,8 @@ public class Multiset<T> {
         return counts.containsKey(t);
     }
 
-    public int count(T t) {
-        Integer v = counts.get(t);
+    public long count(T t) {
+        Long v = counts.get(t);
         return v == null ? 0 : v;
     }
 

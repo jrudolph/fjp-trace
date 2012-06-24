@@ -16,6 +16,7 @@
 
 package net.shipilev.fjptrace;
 
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -342,8 +343,8 @@ public class Main {
     private void renderTaskStats() throws IOException {
         System.out.println("Rendering task stats");
 
-        renderChart(selfDurations, "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, nsec");
-        renderChart(execDurations, "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, nsec");
+        renderChart(selfDurations.filter(1), "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec");
+        renderChart(execDurations.filter(1), "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec");
     }
 
     private void renderChart(PairedList data, String filename, String chartLabel, String yLabel) throws IOException {
@@ -352,7 +353,7 @@ public class Main {
         XYSeries series = new XYSeries("");
         for (PairedList.Pair entry : data) {
             long x = TimeUnit.NANOSECONDS.toMillis(entry.getK1());
-            int dur = entry.getK2();
+            long dur = TimeUnit.NANOSECONDS.toMicros(entry.getK2());
             if (dur > 0) {
                 series.add(x, dur, false);
             }
@@ -406,13 +407,7 @@ public class Main {
         long min = Integer.MAX_VALUE;
         long max = Integer.MIN_VALUE;
         for (long l : data.getAllY()) {
-            if (l <= 0) {
-                continue;
-            }
-            if (l > 50 * 1000 * 1000) {
-                continue;
-            }
-            values[c++] = l;
+            values[c++] = TimeUnit.NANOSECONDS.toMicros(l);
             min = Math.min(min, l);
             max = Math.max(max, l);
         }
@@ -469,7 +464,7 @@ public class Main {
                         if (start == null) {
                             continue;
                         }
-                        timings.add(currentTask, (int)(e.time - start));
+                        timings.add(currentTask, e.time - start);
                     }
 
                     // start executing
@@ -488,7 +483,7 @@ public class Main {
                     if (s == null) {
                         continue;
                     }
-                    timings.add(e.taskHC, (int)(e.time - s));
+                    timings.add(e.taskHC, e.time - s);
                     selfDurations.add(e.time, timings.count(e.taskHC));
                     timings.removeKey(e.taskHC);
 
@@ -497,7 +492,7 @@ public class Main {
                     if (s1 == null) {
                         continue;
                     }
-                    execDurations.add(e.time, (int)(e.time - s1));
+                    execDurations.add(e.time, e.time - s1);
 
                     Integer parent = parentTasks.remove(e.taskHC);
                     if (parent != null) {
