@@ -77,9 +77,7 @@ public class Main {
 
     private final Events events = new Events();
     private final WorkerStatus workerStatus = new WorkerStatus();
-
-    private final PairedList selfDurations = new PairedList();
-    private final PairedList execDurations = new PairedList();
+    private final TaskStatus taskStatus = new TaskStatus();
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -308,8 +306,8 @@ public class Main {
     private void renderTaskStats() throws IOException {
         System.out.println("Rendering task stats");
 
-        renderChart(selfDurations.filter(1), "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec");
-        renderChart(execDurations.filter(1), "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec");
+        renderChart(taskStatus.getSelf().filter(1), "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec");
+        renderChart(taskStatus.getTotal().filter(1), "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec");
     }
 
     private void renderChart(PairedList data, String filename, String chartLabel, String yLabel) throws IOException {
@@ -449,7 +447,7 @@ public class Main {
                         continue;
                     }
                     timings.add(e.taskHC, e.time - s);
-                    selfDurations.add((e.time - timings.count(e.taskHC) / 2), timings.count(e.taskHC));
+                    taskStatus.addSelf((e.time - timings.count(e.taskHC) / 2), timings.count(e.taskHC));
                     timings.removeKey(e.taskHC);
 
                     // count the time
@@ -457,7 +455,7 @@ public class Main {
                     if (s1 == null) {
                         continue;
                     }
-                    execDurations.add((e.time + s1) / 2, e.time - s1);
+                    taskStatus.addTotal((e.time + s1) / 2, e.time - s1);
 
                     Integer parent = parentTasks.remove(e.taskHC);
                     if (parent != null) {
