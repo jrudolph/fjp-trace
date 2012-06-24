@@ -29,15 +29,12 @@ import org.jfree.chart.renderer.xy.XYDotRenderer;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.jfree.ui.RectangleEdge;
 import sun.misc.Unsafe;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -71,7 +68,6 @@ public class Main {
     private final static Unsafe U;
     private final static long BBASE;
 
-    private static final Color COLOR_GRAY = Color.getHSBColor(0f, 0f, 0.9f);
     private static final Comparator<Color> COLOR_COMPARATOR = new Comparator<Color>() {
         @Override
         public int compare(Color o1, Color o2) {
@@ -242,7 +238,7 @@ public class Main {
                 WorkerStatusPK pkStatus = pkTimelines.get(w).getStatus(tick);
                 WorkerStatusJN jnStatus = jnTimelines.get(w).getStatus(tick);
 
-                Color color = selectColor(blStatus, pkStatus, jnStatus);
+                Color color = Selectors.selectColor(blStatus, pkStatus, jnStatus);
                 colors.add(color);
 
                 g.setColor(color);
@@ -293,13 +289,13 @@ public class Main {
                 for (WorkerStatusJN statusJN : WorkerStatusJN.values()) {
                     int cY = index * LEG_STEP;
 
-                    Color color = selectColor(statusBL, statusPK, statusJN);
+                    Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
                     if (alreadyPrinted.add(color)) {
                         g.setColor(color);
                         g.fillRect(T_WIDTH, cY, LEG_STEP, LEG_STEP);
 
                         g.setColor(Color.BLACK);
-                        g.drawString(selectTextLong(statusBL, statusPK, statusJN), T_WIDTH + LEG_STEP + 5, cY + LEG_STEP - 5);
+                        g.drawString(Selectors.selectTextLong(statusBL, statusPK, statusJN), T_WIDTH + LEG_STEP + 5, cY + LEG_STEP - 5);
 
                         index++;
                     }
@@ -311,97 +307,6 @@ public class Main {
         g.drawString("State distribution:", T_WIDTH + W_WIDTH + P_WIDTH, H_HEIGHT - 5);
 
         ImageIO.write(image, "png", new File(TRACE_GRAPH));
-    }
-
-    private Color selectColor(WorkerStatusBL blStatus, WorkerStatusPK pkStatus, WorkerStatusJN jnStatus) {
-        switch (blStatus) {
-            case IDLE:
-                switch (pkStatus) {
-                    case ACTIVE:
-                        return Color.YELLOW;
-                    case PARKED:
-                        return COLOR_GRAY;
-                }
-            case RUNNING:
-                switch (jnStatus) {
-                    case FREE:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return Color.GREEN;
-                            case PARKED:
-                                return Color.MAGENTA;
-                        }
-                    case JOINING:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return Color.BLUE;
-                            case PARKED:
-                                return Color.RED;
-                        }
-                }
-        }
-        throw new IllegalStateException();
-    }
-
-    // should be exactly 20 chars
-    private String selectText(WorkerStatusBL blStatus, WorkerStatusPK pkStatus, WorkerStatusJN jnStatus) {
-        switch (blStatus) {
-            case IDLE:
-                switch (pkStatus) {
-                    case ACTIVE:
-                        return "    --- infr ---    ";
-                    case PARKED:
-                        return "                    ";
-                }
-            case RUNNING:
-                switch (jnStatus) {
-                    case FREE:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return "    *** exec ***    ";
-                            case PARKED:
-                                return "    --- wait ---    ";
-                        }
-                    case JOINING:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return "    *** join ***    ";
-                            case PARKED:
-                                return "    --- wait ---    ";
-                        }
-                }
-        }
-        throw new IllegalStateException();
-    }
-
-    private String selectTextLong(WorkerStatusBL blStatus, WorkerStatusPK pkStatus, WorkerStatusJN jnStatus) {
-        switch (blStatus) {
-            case IDLE:
-                switch (pkStatus) {
-                    case ACTIVE:
-                        return "Infrastructure (everything beyond tasks themselves)";
-                    case PARKED:
-                        return "Parked, and no work";
-                }
-            case RUNNING:
-                switch (jnStatus) {
-                    case FREE:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return "Executing local task, running";
-                            case PARKED:
-                                return "Executing local task, parked on waiting";
-                        }
-                    case JOINING:
-                        switch (pkStatus) {
-                            case ACTIVE:
-                                return "Joining task, executing another task";
-                            case PARKED:
-                                return "Joining task, executing another task, parked on waiting";
-                        }
-                }
-        }
-        throw new IllegalStateException();
     }
 
     private void renderText() throws IOException {
@@ -429,7 +334,7 @@ public class Main {
                     WorkerStatusPK statusPK = pkTimelines.get(w).getStatus(e.time);
                     WorkerStatusJN statusJN = jnTimelines.get(w).getStatus(e.time);
 
-                    pw.print(selectText(statusBL, statusPK, statusJN));
+                    pw.print(Selectors.selectText(statusBL, statusPK, statusJN));
                 }
             }
             pw.println();
@@ -667,51 +572,6 @@ public class Main {
                 }
             }
         }
-    }
-
-    /**
-     * Business logic status
-     */
-    public enum WorkerStatusBL {
-        /**
-         * Actively executing business logic tasks
-         */
-        RUNNING,
-
-        /**
-         * Not executing business logic tasks
-         */
-        IDLE,
-    }
-
-    /**
-     * Thread status
-     */
-    public enum WorkerStatusPK {
-        /**
-         * Thread is parked
-         */
-        PARKED,
-
-        /**
-         * Thread is active
-         */
-        ACTIVE,
-    }
-
-    /**
-     * Join/helping status
-     */
-    public enum WorkerStatusJN {
-        /**
-         * Not joining any other tasks
-         */
-        FREE,
-
-        /**
-         * Helping to execute other tasks
-         */
-        JOINING,
     }
 
 }
