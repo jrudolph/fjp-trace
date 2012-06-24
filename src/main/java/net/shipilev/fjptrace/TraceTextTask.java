@@ -2,6 +2,7 @@ package net.shipilev.fjptrace;
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
@@ -9,6 +10,8 @@ import java.util.zip.GZIPOutputStream;
 public class TraceTextTask extends RecursiveAction {
 
     private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log.gz");
+    private static final Integer TRACE_TEXT_LIMIT = Integer.getInteger("trace.text.limit", 100_000);
+
     private final Events events;
     private final WorkerStatus workerStatus;
 
@@ -27,6 +30,17 @@ public class TraceTextTask extends RecursiveAction {
     }
 
     public void call() throws Exception {
+        int count = 0;
+        List<Event> list = events.getList();
+
+        int linesToProcess;
+        if (list.size() > TRACE_TEXT_LIMIT) {
+            System.out.println("Impractical to dump text trace larger than for " + TRACE_TEXT_LIMIT + ", limiting output");
+            linesToProcess = TRACE_TEXT_LIMIT;
+        } else {
+            linesToProcess = list.size();
+        }
+
         System.out.println("Rendering text to " + TRACE_TEXT);
 
         PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(TRACE_TEXT)));
@@ -37,9 +51,12 @@ public class TraceTextTask extends RecursiveAction {
         }
         pw.println();
 
-        for (Event e : events) {
+        for (Event e : list) {
+            if (count++ > linesToProcess) {
+                break;
+            }
+
             pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
-//            pw.format("%10d", e.time);
 
             for (long w : events.getWorkers()) {
                 if (w == e.workerId) {
