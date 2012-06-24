@@ -76,10 +76,8 @@ public class Main {
     };
 
     private final Events events = new Events();
+    private final WorkerStatus workerStatus = new WorkerStatus();
 
-    private final Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
-    private final Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
-    private final Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
     private final PairedList selfDurations = new PairedList();
     private final PairedList execDurations = new PairedList();
 
@@ -169,21 +167,11 @@ public class Main {
         /*
           Compute pivot points
         */
-        SortedSet<Long> times = new TreeSet<>();
-
-        for (Timeline t : blTimelines.values()) {
-            times.addAll(t.getTimes());
-        }
-        for (Timeline t : pkTimelines.values()) {
-            times.addAll(t.getTimes());
-        }
-        for (Timeline t : jnTimelines.values()) {
-            times.addAll(t.getTimes());
-        }
+        SortedSet<Long> times = workerStatus.getTimes();
 
         /*
-           Render it!
-         */
+          Render it!
+        */
 
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 
@@ -211,11 +199,11 @@ public class Main {
 
             int wIndex = 0;
             for (long w : events.getWorkers()) {
-                WorkerStatusBL blStatus = blTimelines.get(w).getStatus(tick);
-                WorkerStatusPK pkStatus = pkTimelines.get(w).getStatus(tick);
-                WorkerStatusJN jnStatus = jnTimelines.get(w).getStatus(tick);
+                WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
+                WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
+                WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
 
-                Color color = Selectors.selectColor(blStatus, pkStatus, jnStatus);
+                Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
                 colors.add(color);
 
                 g.setColor(color);
@@ -305,9 +293,9 @@ public class Main {
                 if (w == e.workerId) {
                     pw.format("%20s", e.eventType + "(" + e.taskHC + ")");
                 } else {
-                    WorkerStatusBL statusBL = blTimelines.get(w).getStatus(e.time);
-                    WorkerStatusPK statusPK = pkTimelines.get(w).getStatus(e.time);
-                    WorkerStatusJN statusJN = jnTimelines.get(w).getStatus(e.time);
+                    WorkerStatusBL statusBL = workerStatus.getBLStatus(w, e.time);
+                    WorkerStatusPK statusPK = workerStatus.getPKStatus(w, e.time);
+                    WorkerStatusJN statusJN = workerStatus.getJNStatus(w, e.time);
 
                     pw.print(Selectors.selectText(statusBL, statusPK, statusJN));
                 }
@@ -491,16 +479,6 @@ public class Main {
 
         for (long w : events.getWorkers()) {
 
-            Timeline<WorkerStatusBL> vBL = new Timeline<>();
-            Timeline<WorkerStatusPK> vPK = new Timeline<>();
-            Timeline<WorkerStatusJN> vJN = new Timeline<>();
-            blTimelines.put(w, vBL);
-            pkTimelines.put(w, vPK);
-            jnTimelines.put(w, vJN);
-            vBL.add(-1, WorkerStatusBL.IDLE);
-            vPK.add(-1, WorkerStatusPK.PARKED);
-            vJN.add(-1, WorkerStatusJN.FREE);
-
             for (Event e : events) {
                 if (w != e.workerId) {
                     continue;
@@ -509,33 +487,33 @@ public class Main {
                 switch (e.eventType) {
                     case EXEC:
                         execDepth++;
-                        vBL.add(e.time, WorkerStatusBL.RUNNING);
+                        workerStatus.add(e.time, w, WorkerStatusBL.RUNNING);
                         break;
 
                     case EXECED:
                         execDepth--;
                         if (execDepth == 0) {
-                            vBL.add(e.time, WorkerStatusBL.IDLE);
+                            workerStatus.add(e.time, w, WorkerStatusBL.IDLE);
                         }
                         break;
 
                     case PARK:
-                        vPK.add(e.time, WorkerStatusPK.PARKED);
+                        workerStatus.add(e.time, w, WorkerStatusPK.PARKED);
                         break;
 
                     case UNPARK:
-                        vPK.add(e.time, WorkerStatusPK.ACTIVE);
+                        workerStatus.add(e.time, w, WorkerStatusPK.ACTIVE);
                         break;
 
                     case JOIN:
                         jnDepth++;
-                        vJN.add(e.time, WorkerStatusJN.JOINING);
+                        workerStatus.add(e.time, w, WorkerStatusJN.JOINING);
                         break;
 
                     case JOINED:
                         jnDepth--;
                         if (jnDepth == 0) {
-                            vJN.add(e.time, WorkerStatusJN.FREE);
+                            workerStatus.add(e.time, w, WorkerStatusJN.FREE);
                         }
                         break;
                 }
