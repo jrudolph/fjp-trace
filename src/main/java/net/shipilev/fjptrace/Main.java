@@ -109,9 +109,7 @@ public class Main {
     }
 
     private void run(String filename) throws IOException {
-        if (!read(filename)) {
-            return;
-        }
+        read(filename);
 
         computeWorkerStatus();
         computeTaskStatus();
@@ -121,7 +119,7 @@ public class Main {
         renderText();
     }
 
-    private boolean read(String filename) throws IOException {
+    private void read(String filename) throws IOException {
         InputStream is = new BufferedInputStream(new FileInputStream(filename));
 
         byte[] buffer = new byte[22];
@@ -157,7 +155,7 @@ public class Main {
 
         if (events.isEmpty()) {
             System.out.println("No events in the log");
-            return false;
+            throw new IOException("No events in the log");
         }
 
         System.out.println(events.size() + " events read");
@@ -171,7 +169,6 @@ public class Main {
 
         start = events.get(0).time;
         end = events.get(events.size() - 1).time;
-        return true;
     }
 
     private void renderGraph() throws IOException {
@@ -517,7 +514,11 @@ public class Main {
     private void computeWorkerStatus() {
         System.out.println("Computing worker status");
 
+        int execDepth = 0;
+        int jnDepth = 0;
+
         for (long w : workers) {
+
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
             Timeline<WorkerStatusPK> vPK = new Timeline<>();
             Timeline<WorkerStatusJN> vJN = new Timeline<>();
@@ -527,48 +528,44 @@ public class Main {
             vBL.add(-1, WorkerStatusBL.IDLE);
             vPK.add(-1, WorkerStatusPK.PARKED);
             vJN.add(-1, WorkerStatusJN.FREE);
-        }
 
-        Multiset<Long> execDepth = new Multiset<>();
-        Multiset<Long> jnDepth = new Multiset<>();
+            for (Event e : events) {
+                if (w != e.workerId) {
+                    continue;
+                }
 
-        for (Event e : events) {
-            for (long w : workers) {
-                if (w == e.workerId) {
+                switch (e.eventType) {
+                    case EXEC:
+                        execDepth++;
+                        vBL.add(e.time, WorkerStatusBL.RUNNING);
+                        break;
 
-                    switch (e.eventType) {
-                        case EXEC:
-                            execDepth.add(w);
-                            blTimelines.get(w).add(e.time, WorkerStatusBL.RUNNING);
-                            break;
+                    case EXECED:
+                        execDepth--;
+                        if (execDepth == 0) {
+                            vBL.add(e.time, WorkerStatusBL.IDLE);
+                        }
+                        break;
 
-                        case EXECED:
-                            execDepth.remove(w, 1);
-                            if (!execDepth.contains(w)) {
-                                blTimelines.get(w).add(e.time, WorkerStatusBL.IDLE);
-                            }
-                            break;
+                    case PARK:
+                        vPK.add(e.time, WorkerStatusPK.PARKED);
+                        break;
 
-                        case PARK:
-                            pkTimelines.get(w).add(e.time, WorkerStatusPK.PARKED);
-                            break;
+                    case UNPARK:
+                        vPK.add(e.time, WorkerStatusPK.ACTIVE);
+                        break;
 
-                        case UNPARK:
-                            pkTimelines.get(w).add(e.time, WorkerStatusPK.ACTIVE);
-                            break;
+                    case JOIN:
+                        jnDepth++;
+                        vJN.add(e.time, WorkerStatusJN.JOINING);
+                        break;
 
-                        case JOIN:
-                            jnDepth.add(w);
-                            jnTimelines.get(w).add(e.time, WorkerStatusJN.JOINING);
-                            break;
-
-                        case JOINED:
-                            jnDepth.remove(w, 1);
-                            if (!jnDepth.contains(w)) {
-                                jnTimelines.get(w).add(e.time, WorkerStatusJN.FREE);
-                            }
-                            break;
-                    }
+                    case JOINED:
+                        jnDepth--;
+                        if (jnDepth == 0) {
+                            vJN.add(e.time, WorkerStatusJN.FREE);
+                        }
+                        break;
                 }
             }
         }
