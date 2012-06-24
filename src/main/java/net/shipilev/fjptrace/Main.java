@@ -16,7 +16,6 @@
 
 package net.shipilev.fjptrace;
 
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -76,17 +75,13 @@ public class Main {
         }
     };
 
-    private final ArrayList<Event> events = new ArrayList<>();
-    private final SortedSet<Long> workers = new TreeSet<>();
+    private final Events events = new Events();
 
     private final Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
     private final Map<Long,Timeline<WorkerStatusPK>> pkTimelines = new HashMap<>();
     private final Map<Long,Timeline<WorkerStatusJN>> jnTimelines = new HashMap<>();
     private final PairedList selfDurations = new PairedList();
     private final PairedList execDurations = new PairedList();
-
-    private long start;
-    private long end;
 
     public static void main(String[] args) throws IOException {
         String filename = "forkjoin.trace";
@@ -149,27 +144,11 @@ public class Main {
             if (!events.add(event)) {
                 throw new IllegalStateException("Duplicate event: " + event);
             }
-
-            workers.add(threadID);
         }
         is.close();
 
-        if (events.isEmpty()) {
-            System.out.println("No events in the log");
-            throw new IOException("No events in the log");
-        }
-
-        System.out.println(events.size() + " events read");
-
-        for (Event event : events) {
-            event.time -= basetime;
-        }
-
-        Collections.sort(events);
-        events.trimToSize();
-
-        start = events.get(0).time;
-        end = events.get(events.size() - 1).time;
+        events.setBasetime(basetime);
+        events.seal();
     }
 
     private void renderGraph() throws IOException {
@@ -184,8 +163,8 @@ public class Main {
         final int P_WIDTH = (int) (WIDTH * 0.05);
         final int D_WIDTH = (int) (WIDTH * 0.2);
 
-        final int W_STEP = W_WIDTH / workers.size();
-        final int D_STEP = D_WIDTH / workers.size();
+        final int W_STEP = W_WIDTH / events.getWorkers().size();
+        final int D_STEP = D_WIDTH / events.getWorkers().size();
 
         /*
           Compute pivot points
@@ -216,11 +195,11 @@ public class Main {
 
         List<Color> colors = new ArrayList<>();
 
-        long lastTick = start;
+        long lastTick = events.getStart();
         for (long tick : times) {
 
-            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - start) / (end - start));
-            int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - start) / (end - start));
+            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
+            int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - events.getStart()) / (events.getEnd() - events.getStart()));
 
             // performance: skip rendering over and over again
             if (cY == lY) {
@@ -231,7 +210,7 @@ public class Main {
             colors.clear();
 
             int wIndex = 0;
-            for (long w : workers) {
+            for (long w : events.getWorkers()) {
                 WorkerStatusBL blStatus = blTimelines.get(w).getStatus(tick);
                 WorkerStatusPK pkStatus = pkTimelines.get(w).getStatus(tick);
                 WorkerStatusJN jnStatus = jnTimelines.get(w).getStatus(tick);
@@ -263,13 +242,13 @@ public class Main {
          * Render timeline
          */
 
-        long period = end - start;
+        long period = events.getEnd() - events.getStart();
         long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
 
         g.setColor(Color.BLACK);
 
-        for (long tick = start; tick < end; tick += step) {
-            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - start) / (end - start));
+        for (long tick = events.getStart(); tick < events.getEnd(); tick += step) {
+            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
             g.drawLine(10, cY, WIDTH - 10, cY);
             g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick)), 10, cY - 3);
         }
@@ -312,10 +291,8 @@ public class Main {
 
         PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(TRACE_TEXT)));
 
-        pw.println("Total events: "  + events.size());
-
         pw.format("%10s", "Time, ms");
-        for (long w : workers) {
+        for (long w : events.getWorkers()) {
             pw.format("%20s", w);
         }
         pw.println();
@@ -324,7 +301,7 @@ public class Main {
             pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
 //            pw.format("%10d", e.time);
 
-            for (long w : workers) {
+            for (long w : events.getWorkers()) {
                 if (w == e.workerId) {
                     pw.format("%20s", e.eventType + "(" + e.taskHC + ")");
                 } else {
@@ -387,8 +364,8 @@ public class Main {
         domainAxis.setLowerMargin(0.0);
         domainAxis.setUpperMargin(0.0);
         domainAxis.setInverted(true);
-        domainAxis.setLowerBound(TimeUnit.NANOSECONDS.toMillis(start));
-        domainAxis.setUpperBound(TimeUnit.NANOSECONDS.toMillis(end));
+        domainAxis.setLowerBound(TimeUnit.NANOSECONDS.toMillis(events.getStart()));
+        domainAxis.setUpperBound(TimeUnit.NANOSECONDS.toMillis(events.getEnd()));
 
         final ValueAxis rangeAxis = new LogarithmicAxis(yLabel);
         rangeAxis.setTickMarkPaint(Color.black);
@@ -512,7 +489,7 @@ public class Main {
         int execDepth = 0;
         int jnDepth = 0;
 
-        for (long w : workers) {
+        for (long w : events.getWorkers()) {
 
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
             Timeline<WorkerStatusPK> vPK = new Timeline<>();
