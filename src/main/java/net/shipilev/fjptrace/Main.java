@@ -411,7 +411,7 @@ public class Main {
             min = Math.min(min, l);
             max = Math.max(max, l);
         }
-        histDataSet.addSeries("H1", Arrays.copyOf(values, c), 1000);
+        histDataSet.addSeries("H1", Arrays.copyOf(values, c), WIDTH);
 
         final JFreeChart histChart = ChartFactory.createHistogram(
                 chartLabel,
@@ -484,7 +484,7 @@ public class Main {
                         continue;
                     }
                     timings.add(e.taskHC, e.time - s);
-                    selfDurations.add(e.time, timings.count(e.taskHC));
+                    selfDurations.add((e.time - timings.count(e.taskHC) / 2), timings.count(e.taskHC));
                     timings.removeKey(e.taskHC);
 
                     // count the time
@@ -492,7 +492,7 @@ public class Main {
                     if (s1 == null) {
                         continue;
                     }
-                    execDurations.add(e.time, e.time - s1);
+                    execDurations.add((e.time + s1) / 2, e.time - s1);
 
                     Integer parent = parentTasks.remove(e.taskHC);
                     if (parent != null) {
