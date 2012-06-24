@@ -79,7 +79,7 @@ public class Main {
         }
     };
 
-    private final List<Event> events = new ArrayList<>();
+    private final ArrayList<Event> events = new ArrayList<>();
     private final SortedSet<Long> workers = new TreeSet<>();
 
     private final Map<Long,Timeline<WorkerStatusBL>> blTimelines = new HashMap<>();
@@ -113,6 +113,19 @@ public class Main {
     }
 
     private void run(String filename) throws IOException {
+        if (!read(filename)) {
+            return;
+        }
+
+        computeWorkerStatus();
+        computeTaskStatus();
+
+        renderTaskStats();
+        renderGraph();
+        renderText();
+    }
+
+    private boolean read(String filename) throws IOException {
         InputStream is = new BufferedInputStream(new FileInputStream(filename));
 
         byte[] buffer = new byte[22];
@@ -144,10 +157,11 @@ public class Main {
 
             workers.add(threadID);
         }
+        is.close();
 
         if (events.isEmpty()) {
             System.out.println("No events in the log");
-            return;
+            return false;
         }
 
         System.out.println(events.size() + " events read");
@@ -157,16 +171,11 @@ public class Main {
         }
 
         Collections.sort(events);
+        events.trimToSize();
 
         start = events.get(0).time;
         end = events.get(events.size() - 1).time;
-
-        computeWorkerStatus();
-        computeTaskStatus();
-
-        renderTaskStats();
-        renderGraph();
-        renderText();
+        return true;
     }
 
     private void renderGraph() throws IOException {

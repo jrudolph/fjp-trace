@@ -22,7 +22,7 @@ public class Event implements Comparable<Event> {
     public final long workerId;
     public final int taskHC;
 
-    public Event(Long time, EventType eventType, long workerId, int taskHC) {
+    public Event(long time, EventType eventType, long workerId, int taskHC) {
         this.time = time;
         this.eventType = eventType;
         this.workerId = workerId;
