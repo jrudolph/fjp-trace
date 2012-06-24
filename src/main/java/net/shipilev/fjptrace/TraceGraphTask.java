@@ -13,7 +13,7 @@ import java.util.SortedSet;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.TimeUnit;
 
-public class TraceGraphTask extends RecursiveAction {
+public class TraceGraphTask extends LoggedRecursiveAction {
     private static final int HEIGHT = Integer.getInteger("height", 2000);
     private static final int WIDTH = Integer.getInteger("width", 1000);
     private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
@@ -24,26 +24,18 @@ public class TraceGraphTask extends RecursiveAction {
             return Integer.compare(o1.getRGB(), o2.getRGB());
         }
     };
+
     private final Events events;
     private final WorkerStatus workerStatus;
 
     public TraceGraphTask(Events events, WorkerStatus WorkerStatus) {
+        super("Rendering graph to " + TRACE_GRAPH);
         this.events = events;
-        workerStatus = WorkerStatus;
+        this.workerStatus = WorkerStatus;
     }
 
     @Override
-    public void compute() {
-        try {
-            call();
-        } catch (Exception e) {
-            // do nothing
-        }
-    }
-
-    public void call() throws Exception {
-        System.out.println("Rendering graph to " + TRACE_GRAPH);
-
+    public void doWork() throws Exception {
         final int H_HEIGHT = (int) (200);
         final int D_HEIGHT = (int) (HEIGHT - H_HEIGHT);
 

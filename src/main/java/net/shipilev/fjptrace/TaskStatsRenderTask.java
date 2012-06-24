@@ -43,7 +43,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
         );
     }
 
-    public static class TaskStatsGraphTask extends RecursiveAction {
+    public static class TaskStatsGraphTask extends LoggedRecursiveAction {
 
         private final Events events;
         private final PairedList data;
@@ -52,6 +52,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
         private final String yLabel;
 
         private TaskStatsGraphTask(Events events, PairedList data, String filename, String chartLabel, String yLabel) {
+            super("Task statistics render \"" + chartLabel + "\" to " + filename);
             this.events = events;
             this.data = data;
             this.filename = filename;
@@ -60,11 +61,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
         }
 
         @Override
-        protected void compute() {
-
-
-            System.err.println("Rendering " + chartLabel + " to " + filename);
-
+        protected void doWork() {
             XYSeries series = new XYSeries("");
             for (PairedList.Pair entry : data) {
                 long x = TimeUnit.NANOSECONDS.toMillis(entry.getK1());

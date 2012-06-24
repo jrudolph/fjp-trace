@@ -7,7 +7,7 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
-public class TraceTextTask extends RecursiveAction {
+public class TraceTextTask extends LoggedRecursiveAction {
 
     private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log.gz");
     private static final Integer TRACE_TEXT_LIMIT = Integer.getInteger("trace.text.limit", 100_000);
@@ -16,32 +16,23 @@ public class TraceTextTask extends RecursiveAction {
     private final WorkerStatus workerStatus;
 
     public TraceTextTask(Events events, WorkerStatus workerStatus) {
+        super("Printing task trace to " + TRACE_TEXT);
         this.events = events;
         this.workerStatus = workerStatus;
     }
 
     @Override
-    public void compute() {
-        try {
-            call();
-        } catch (Exception e) {
-            // do nothing
-        }
-    }
-
-    public void call() throws Exception {
+    public void doWork() throws Exception {
         int count = 0;
         List<Event> list = events.getList();
 
         int linesToProcess;
         if (list.size() > TRACE_TEXT_LIMIT) {
-            System.out.println("Impractical to dump text trace larger than for " + TRACE_TEXT_LIMIT + ", limiting output");
+            getPw().println("Impractical to dump text trace larger than for " + TRACE_TEXT_LIMIT + ", limiting output");
             linesToProcess = TRACE_TEXT_LIMIT;
         } else {
             linesToProcess = list.size();
         }
-
-        System.out.println("Rendering text to " + TRACE_TEXT);
 
         PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(TRACE_TEXT)));
 

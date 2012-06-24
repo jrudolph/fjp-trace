@@ -4,27 +4,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.RecursiveTask;
 
-public class TaskStatusTask extends RecursiveTask<TaskStatus> {
+public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
     private final Events events;
 
     public TaskStatusTask(Events events) {
+        super("Computing task stats");
         this.events = events;
     }
 
     @Override
-    public TaskStatus compute() {
-        try {
-            return call();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public TaskStatus call() throws Exception {
-        System.out.println("Computing task stats");
-
-
+    public TaskStatus doWork() throws Exception {
         TaskStatus taskStatus = new TaskStatus();
 
         Map<Integer, Long> execTime = new HashMap<>();

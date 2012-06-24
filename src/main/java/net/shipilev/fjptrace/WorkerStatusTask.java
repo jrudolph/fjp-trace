@@ -2,26 +2,17 @@ package net.shipilev.fjptrace;
 
 import java.util.concurrent.RecursiveTask;
 
-public class WorkerStatusTask extends RecursiveTask<WorkerStatus> {
+public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
 
     private final Events events;
 
     public WorkerStatusTask(Events events) {
+        super("Computing worker status");
         this.events = events;
     }
 
     @Override
-    public WorkerStatus compute() {
-        try {
-            return call();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public WorkerStatus call() throws Exception {
-        System.out.println("Computing worker status");
-
+    public WorkerStatus doWork() {
         WorkerStatus workerStatus = new WorkerStatus();
 
         int execDepth = 0;

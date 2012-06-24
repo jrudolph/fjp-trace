@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.concurrent.RecursiveTask;
 
-public class ReadTask extends RecursiveTask<Events> {
+public class ReadTask extends LoggedRecursiveTask<Events> {
 
     private static final int OFFSET = Integer.getInteger("offset", 0);
     private static final int LIMIT = Integer.getInteger("limit", Integer.MAX_VALUE);
@@ -33,19 +33,12 @@ public class ReadTask extends RecursiveTask<Events> {
     private final String filename;
 
     public ReadTask(String filename) {
+        super("Reading trace file");
         this.filename = filename;
     }
 
     @Override
-    public Events compute() {
-        try {
-            return call();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public Events call() throws Exception {
+    public Events doWork() throws Exception {
         Events events = new Events();
         InputStream is = new BufferedInputStream(new FileInputStream(filename));
 
