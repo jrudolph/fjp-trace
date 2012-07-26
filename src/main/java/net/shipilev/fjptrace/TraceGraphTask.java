@@ -1,16 +1,20 @@
 package net.shipilev.fjptrace;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class TraceGraphTask extends LoggedRecursiveAction {
@@ -64,43 +68,54 @@ public class TraceGraphTask extends LoggedRecursiveAction {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
-        java.util.List<Color> colors = new ArrayList<>();
-
         long lastTick = events.getStart();
+
+        Multimap<Long, Color> workerColors = new Multimap<>();
+
         for (long tick : times) {
 
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
             int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - events.getStart()) / (events.getEnd() - events.getStart()));
 
-            // performance: skip rendering over and over again
-            if (cY == lY) {
-                lastTick = tick;
-                continue;
+            {
+                for (long w : events.getWorkers()) {
+                    WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
+                    WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
+                    WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
+
+                    Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
+
+                    workerColors.put(w, color);
+                }
+
+                // performance: skip rendering over and over again
+                if (cY == lY) {
+                    lastTick = tick;
+                    continue;
+                }
             }
 
-            colors.clear();
+            // render predominant color
+            List<Color> mColors = new ArrayList<>();
+            for (long w : workerColors.keySet()) {
+                Multiset<Color> set = new Multiset<>();
+                set.addAll(workerColors.get(w));
+                mColors.add(set.getMostFrequent());
+            }
+
+            workerColors.clear();
 
             int wIndex = 0;
-            for (long w : events.getWorkers()) {
-                WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
-                WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
-                WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
-
-                Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
-                colors.add(color);
-
+            for (Color color : mColors) {
                 g.setColor(color);
-
-                int cX = T_WIDTH + wIndex * W_STEP;
-                g.fillRect(cX, lY, W_STEP, cY - lY);
-
+                g.fillRect(T_WIDTH + wIndex * W_STEP, lY, W_STEP, cY - lY);
                 wIndex++;
             }
 
-            Collections.sort(colors, COLOR_COMPARATOR);
+            Collections.sort(mColors, COLOR_COMPARATOR);
 
             int cIndex = 0;
-            for (Color c : colors) {
+            for (Color c : mColors) {
                 g.setColor(c);
                 g.fillRect(T_WIDTH + W_WIDTH + P_WIDTH + cIndex * D_STEP, lY, D_STEP, cY - lY);
                 cIndex++;

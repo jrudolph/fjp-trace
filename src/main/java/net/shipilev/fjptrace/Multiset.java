@@ -16,7 +16,9 @@
 
 package net.shipilev.fjptrace;
 
-import java.util.HashMap;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * Dirty and naive multiset implementation.
@@ -71,5 +73,24 @@ public class Multiset<T> {
 
     public void removeKey(T t) {
         counts.remove(t);
+    }
+
+    public void addAll(Collection<T> ts) {
+        for (T t : ts) {
+            add(t);
+        }
+    }
+
+    public T getMostFrequent() {
+        long maxCount = Long.MIN_VALUE;
+        T mostFrequent = null;
+        for (T t : counts.keySet()) {
+            Long count = counts.get(t);
+            if (count > maxCount) {
+                maxCount = count;
+                mostFrequent = t;
+            }
+        }
+        return mostFrequent;
     }
 }

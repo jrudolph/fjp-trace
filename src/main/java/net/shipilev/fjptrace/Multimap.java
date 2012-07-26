@@ -46,9 +46,12 @@ public class Multimap<K, V> {
         return map.keySet();
     }
 
-    public Collection<V> get(K k) {
+    public List<V> get(K k) {
         List<V> vs = map.get(k);
-        return vs == null ? Collections.<V>emptyList() : Collections.unmodifiableCollection(vs);
+        return vs == null ? Collections.<V>emptyList() : Collections.unmodifiableList(vs);
     }
 
+    public void clear() {
+        map.clear();
+    }
 }
