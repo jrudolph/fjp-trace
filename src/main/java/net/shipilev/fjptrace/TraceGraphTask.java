@@ -9,10 +9,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +73,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
 
         long lastTick = events.getStart();
 
-        Multimap<Long, Color> workerColors = new Multimap<>();
+        Map<Long, Multiset<Color>> workerColors = new TreeMap<>();
 
         for (long tick : times) {
 
@@ -85,7 +88,12 @@ public class TraceGraphTask extends LoggedRecursiveAction {
 
                     Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
 
-                    workerColors.put(w, color);
+                    Multiset<Color> ms = workerColors.get(w);
+                    if (ms == null) {
+                        ms = new Multiset<>();
+                        workerColors.put(w, ms);
+                    }
+                    ms.add(color);
                 }
 
                 // performance: skip rendering over and over again
@@ -98,9 +106,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             // render predominant color
             List<Color> mColors = new ArrayList<>();
             for (long w : workerColors.keySet()) {
-                Multiset<Color> set = new Multiset<>();
-                set.addAll(workerColors.get(w));
-                mColors.add(set.getMostFrequent());
+                mColors.add(workerColors.get(w).getMostFrequent());
             }
 
             workerColors.clear();
