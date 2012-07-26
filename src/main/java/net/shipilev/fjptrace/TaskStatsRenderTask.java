@@ -83,19 +83,20 @@ public class TaskStatsRenderTask extends RecursiveAction {
             );
 
             chart.setBackgroundPaint(Color.white);
-//        chart.getLegend().setPosition(RectangleEdge.BOTTOM);
 
             final XYPlot plot = chart.getXYPlot();
             XYDotRenderer renderer = new XYDotRenderer();
             renderer.setDefaultEntityRadius(3);
+            renderer.setSeriesPaint(0, Color.GREEN);
             plot.setRenderer(renderer);
-            plot.setBackgroundPaint(Color.white);
+            plot.setBackgroundPaint(Color.black);
             plot.setForegroundAlpha(0.65f);
-            plot.setDomainGridlinePaint(Color.gray);
-            plot.setRangeGridlinePaint(Color.gray);
+            plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
+            plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+            plot.setOutlinePaint(Color.LIGHT_GRAY);
 
             final ValueAxis domainAxis = plot.getDomainAxis();
-            domainAxis.setTickMarkPaint(Color.black);
+            domainAxis.setTickMarkPaint(Color.white);
             domainAxis.setLowerMargin(0.0);
             domainAxis.setUpperMargin(0.0);
             domainAxis.setInverted(true);
@@ -103,7 +104,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
             domainAxis.setUpperBound(TimeUnit.NANOSECONDS.toMillis(events.getEnd()));
 
             final ValueAxis rangeAxis = new LogarithmicAxis(yLabel);
-            rangeAxis.setTickMarkPaint(Color.black);
+            rangeAxis.setTickMarkPaint(Color.white);
             rangeAxis.setStandardTickUnits(new StandardTickUnitSource());
             plot.setRangeAxis(rangeAxis);
 
@@ -111,6 +112,10 @@ public class TaskStatsRenderTask extends RecursiveAction {
             space.setLeft(50);
 
             plot.setFixedDomainAxisSpace(space);
+
+            /**
+             * Render histogram
+             */
 
             final HistogramDataset histDataSet = new HistogramDataset();
             double[] values = new double[data.getAllY().length];
@@ -134,10 +139,13 @@ public class TaskStatsRenderTask extends RecursiveAction {
             );
 
             histChart.setBackgroundPaint(Color.white);
+            XYPlot histPlot = histChart.getXYPlot();
 
             rangeAxis.setAutoRange(false);
-            histChart.getXYPlot().setDomainAxis(rangeAxis);
-            histChart.getXYPlot().setFixedRangeAxisSpace(space);
+            histPlot.setDomainAxis(rangeAxis);
+            histPlot.setFixedRangeAxisSpace(space);
+            histPlot.setBackgroundPaint(Color.black);
+            histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
 
             BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
             Graphics2D graphics = bi.createGraphics();
