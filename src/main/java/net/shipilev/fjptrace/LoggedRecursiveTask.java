@@ -19,9 +19,9 @@ public abstract class LoggedRecursiveTask<V> extends RecursiveTask<V> {
     protected V compute() {
         V result = null;
         try {
-            pw.printf("%10s: %s\n", "start", description);
+            reportProgress(0);
             result = doWork();
-            pw.printf("%10s: %s\n", "complete", description);
+            reportProgress(1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,5 +32,10 @@ public abstract class LoggedRecursiveTask<V> extends RecursiveTask<V> {
         return pw;
     }
 
+    protected void reportProgress(double fraction) {
+        pw.printf("%9.2f%%: %s\n", fraction*100, description);
+    }
+
     abstract V doWork() throws Exception;
+
 }

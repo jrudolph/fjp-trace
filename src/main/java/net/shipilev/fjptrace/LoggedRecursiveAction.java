@@ -17,9 +17,9 @@ public abstract class LoggedRecursiveAction extends RecursiveAction {
     @Override
     protected void compute() {
         try {
-            pw.printf("%10s: %s\n", "start", description);
+            reportProgress(0);
             doWork();
-            pw.printf("%10s: %s\n", "complete", description);
+            reportProgress(1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -27,6 +27,10 @@ public abstract class LoggedRecursiveAction extends RecursiveAction {
 
     protected PrintWriter getPw() {
         return pw;
+    }
+
+    protected void reportProgress(double fraction) {
+        pw.printf("%9.2f%%: %s\n", fraction*100, description);
     }
 
     abstract void doWork() throws Exception;

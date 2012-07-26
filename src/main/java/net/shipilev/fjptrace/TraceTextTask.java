@@ -47,6 +47,10 @@ public class TraceTextTask extends LoggedRecursiveAction {
                 break;
             }
 
+            if ((count & 0xFFFF) == 0) {
+                reportProgress(count*1.0 / list.size());
+            }
+
             pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
 
             for (long w : events.getWorkers()) {
