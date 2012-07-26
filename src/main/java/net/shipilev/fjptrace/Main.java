@@ -54,7 +54,8 @@ public class Main {
             ForkJoinTask.invokeAll(
                     new TraceGraphTask(events, wStatus.join()),
                     new TraceTextTask(events, wStatus.join()),
-                    new TaskStatsRenderTask(events, tStatus.join())
+                    new TaskStatsRenderTask(events, tStatus.join()),
+                    new WorkerQueueStatusTask(events)
             );
         }
     }
