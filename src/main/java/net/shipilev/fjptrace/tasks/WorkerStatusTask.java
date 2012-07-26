@@ -1,6 +1,11 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.tasks;
 
-import java.util.concurrent.RecursiveTask;
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.WorkerStatus;
+import net.shipilev.fjptrace.WorkerStatusBL;
+import net.shipilev.fjptrace.WorkerStatusJN;
+import net.shipilev.fjptrace.WorkerStatusPK;
 
 public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
 

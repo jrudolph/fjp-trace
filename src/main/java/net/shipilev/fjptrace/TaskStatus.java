@@ -1,5 +1,7 @@
 package net.shipilev.fjptrace;
 
+import net.shipilev.fjptrace.util.PairedList;
+
 public class TaskStatus {
 
     private final PairedList selfDurations = new PairedList();

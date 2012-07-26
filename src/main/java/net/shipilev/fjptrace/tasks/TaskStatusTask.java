@@ -1,8 +1,12 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.tasks;
+
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.util.Multiset;
+import net.shipilev.fjptrace.TaskStatus;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.RecursiveTask;
 
 public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 

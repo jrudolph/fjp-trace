@@ -1,9 +1,17 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.tasks;
+
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Selectors;
+import net.shipilev.fjptrace.WorkerStatus;
+import net.shipilev.fjptrace.WorkerStatusBL;
+import net.shipilev.fjptrace.WorkerStatusJN;
+import net.shipilev.fjptrace.WorkerStatusPK;
+import net.shipilev.fjptrace.tasks.LoggedRecursiveAction;
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 

@@ -1,12 +1,15 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.tasks;
 
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.EventType;
+import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.tasks.LoggedRecursiveTask;
 import sun.misc.Unsafe;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.util.concurrent.RecursiveTask;
 
 public class ReadTask extends LoggedRecursiveTask<Events> {
 

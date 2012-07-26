@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.util;
 
 import java.util.ArrayList;
 import java.util.Collection;

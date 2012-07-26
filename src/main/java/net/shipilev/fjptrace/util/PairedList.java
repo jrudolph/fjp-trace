@@ -1,4 +1,4 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.util;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 

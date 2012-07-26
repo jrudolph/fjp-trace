@@ -16,6 +16,14 @@
 
 package net.shipilev.fjptrace;
 
+import net.shipilev.fjptrace.tasks.ReadTask;
+import net.shipilev.fjptrace.tasks.TaskStatsRenderTask;
+import net.shipilev.fjptrace.tasks.TaskStatusTask;
+import net.shipilev.fjptrace.tasks.TraceGraphTask;
+import net.shipilev.fjptrace.tasks.TraceTextTask;
+import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
+import net.shipilev.fjptrace.tasks.WorkerStatusTask;
+
 import java.io.IOException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;

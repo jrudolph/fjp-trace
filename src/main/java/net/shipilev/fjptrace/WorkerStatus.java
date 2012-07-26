@@ -1,5 +1,7 @@
 package net.shipilev.fjptrace;
 
+import net.shipilev.fjptrace.util.Timeline;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

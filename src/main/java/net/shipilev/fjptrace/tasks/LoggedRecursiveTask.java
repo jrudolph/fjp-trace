@@ -1,28 +1,31 @@
-package net.shipilev.fjptrace;
+package net.shipilev.fjptrace.tasks;
 
 import java.io.PrintWriter;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 
-public abstract class LoggedRecursiveAction extends RecursiveAction {
+public abstract class LoggedRecursiveTask<V> extends RecursiveTask<V> {
 
     private final String description;
     private final PrintWriter pw;
 
-    public LoggedRecursiveAction(String description) {
+    public LoggedRecursiveTask(String description) {
         super();
         this.description = description;
         this.pw = new PrintWriter(System.out, true);
     }
 
     @Override
-    protected void compute() {
+    protected V compute() {
+        V result = null;
         try {
             reportProgress(0);
-            doWork();
+            result = doWork();
             reportProgress(1);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return result;
     }
 
     protected PrintWriter getPw() {
@@ -33,5 +36,6 @@ public abstract class LoggedRecursiveAction extends RecursiveAction {
         pw.printf("%9.2f%%: %s\n", fraction*100, description);
     }
 
-    abstract void doWork() throws Exception;
+    abstract V doWork() throws Exception;
+
 }
