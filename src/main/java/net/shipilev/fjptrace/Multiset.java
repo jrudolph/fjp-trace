@@ -93,4 +93,8 @@ public class Multiset<T> {
         }
         return mostFrequent;
     }
+
+    public Collection<T> keys() {
+        return counts.keySet();
+    }
 }

@@ -110,6 +110,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             // render predominant color
             List<Color> mColors = new ArrayList<>();
             for (long w : workerColors.keySet()) {
+//                mColors.add(averageColor(workerColors.get(w)));
                 mColors.add(workerColors.get(w).getMostFrequent());
             }
 
@@ -180,6 +181,20 @@ public class TraceGraphTask extends LoggedRecursiveAction {
         g.drawString("State distribution:", T_WIDTH + W_WIDTH + P_WIDTH, H_HEIGHT - 5);
 
         ImageIO.write(image, "png", new File(TRACE_GRAPH));
+    }
+
+    private Color averageColor(Multiset<Color> set) {
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        for (Color c : set.keys()) {
+            r += c.getRed();
+            g += c.getGreen();
+            b += c.getBlue();
+        }
+
+        int size = set.keys().size();
+        return new Color(r / size, g / size, b / size);
     }
 
 }
