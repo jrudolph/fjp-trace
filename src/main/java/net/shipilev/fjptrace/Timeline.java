@@ -18,37 +18,35 @@ package net.shipilev.fjptrace;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class Timeline<T extends Enum<?>> {
 
-    private final SortedSet<Tick> ticks = new TreeSet<>();
+    private final List<Tick> ticks = new ArrayList<>();
+
+    private volatile boolean isSorted;
 
     public void add(long time, T status) {
         ticks.add(new Tick(time, status));
+        isSorted = false;
     }
 
     public T getStatus(long time) {
-        SortedSet<Tick> set = ticks.headSet(new Tick(time, null));
-        if (!set.isEmpty()) {
-            return set.last().status;
-        } else {
-            if (!ticks.isEmpty()) {
-                return ticks.first().status;
-            } else {
-                return null;
-            }
+        if (!isSorted) {
+            Collections.sort(ticks);
+            isSorted = true;
         }
-    }
 
-    public Collection<Long> getTimes() {
-        List<Long> result = new ArrayList<>();
-        for (Tick tick : ticks) {
-            result.add(tick.time);
+        int i = Collections.binarySearch(ticks, new Tick(time, null));
+        if (i > 0) {
+            return ticks.get(i).status;
         }
-        return result;
+
+        int insertionPoint = -i - 1;
+        return ticks.get(Math.max(0, insertionPoint - 1)).status;
     }
 
     private class Tick implements Comparable<Tick> {
