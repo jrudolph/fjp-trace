@@ -86,4 +86,9 @@ public class Event implements Comparable<Event> {
         result = 31 * result + taskHC;
         return result;
     }
+
+    @Override
+    public String toString() {
+        return eventType + "(" + taskHC + ")";
+    }
 }

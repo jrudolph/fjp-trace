@@ -15,10 +15,10 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
     public WorkerStatus doWork() {
         WorkerStatus workerStatus = new WorkerStatus();
 
-        int execDepth = 0;
-        int jnDepth = 0;
-
         for (long w : events.getWorkers()) {
+
+            int execDepth = 0;
+            int jnDepth = 0;
 
             for (Event e : events) {
                 if (w != e.workerId) {
@@ -39,10 +39,18 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         break;
 
                     case PARK:
+                        if (e.taskHC == 0) {
+                            assert execDepth == 0;
+                            assert jnDepth == 0;
+                        }
                         workerStatus.add(e.time, w, WorkerStatusPK.PARKED);
                         break;
 
                     case UNPARK:
+                        if (e.taskHC == 0) {
+                            assert execDepth == 0;
+                            assert jnDepth == 0;
+                        }
                         workerStatus.add(e.time, w, WorkerStatusPK.ACTIVE);
                         break;
 
