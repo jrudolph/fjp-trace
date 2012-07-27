@@ -135,7 +135,7 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
 
             if (0 <= index - OFFSET && index - OFFSET < LIMIT) {
                 Event event = new Event(time, EventType.values()[eventOrd], threadID, taskHC);
-                events.set(index, event);
+                events.set(index - OFFSET, event);
             }
 
             aCount++;
