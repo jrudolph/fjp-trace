@@ -5,6 +5,8 @@ import java.awt.*;
 public class Selectors {
 
     private static final Color COLOR_GRAY = Color.getHSBColor(0f, 0f, 0.9f);
+    private static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
+    private static final Color COLOR_LIGHT_RED = new Color(255, 128, 128);
 
     private Selectors() {
         // prevent instantiation
@@ -26,12 +28,12 @@ public class Selectors {
                             case ACTIVE:
                                 return Color.GREEN;
                             case PARKED:
-                                return Color.MAGENTA;
+                                return COLOR_LIGHT_RED;
                         }
                     case JOINING:
                         switch (pkStatus) {
                             case ACTIVE:
-                                return Color.BLUE;
+                                return COLOR_DARK_GREEN;
                             case PARKED:
                                 return Color.RED;
                         }
