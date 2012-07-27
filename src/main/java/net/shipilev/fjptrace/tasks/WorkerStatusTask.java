@@ -48,10 +48,12 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                             if (execDepth != 0) {
                                 System.err.println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
+                                workerStatus.markInvalid(e.time, w);
                             }
                             if (jnDepth != 0) {
                                 System.err.println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
                                 jnDepth = 0;
+                                workerStatus.markInvalid(e.time, w);
                             }
                         }
                         workerStatus.add(e.time, w, WorkerStatusPK.PARKED);
@@ -62,10 +64,12 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                             if (execDepth != 0) {
                                 System.err.println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
+                                workerStatus.markInvalid(e.time, w);
                             }
                             if (jnDepth != 0) {
                                 System.err.println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
                                 jnDepth = 0;
+                                workerStatus.markInvalid(e.time, w);
                             }
                         }
                         workerStatus.add(e.time, w, WorkerStatusPK.ACTIVE);

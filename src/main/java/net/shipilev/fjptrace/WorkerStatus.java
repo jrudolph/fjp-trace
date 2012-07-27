@@ -36,6 +36,12 @@ public class WorkerStatus {
         jnTimelines.get(worker).add(time, status);
     }
 
+    public void markInvalid(long time, long worker) {
+        blTimelines.get(worker).removeBefore(time);
+        pkTimelines.get(worker).removeBefore(time);
+        jnTimelines.get(worker).removeBefore(time);
+    }
+
     private void ensureWorker(long worker) {
         if (workers.add(worker)) {
             Timeline<WorkerStatusBL> vBL = new Timeline<>();
@@ -81,4 +87,5 @@ public class WorkerStatus {
             return WorkerStatusJN.UNKNOWN;
         }
     }
+
 }

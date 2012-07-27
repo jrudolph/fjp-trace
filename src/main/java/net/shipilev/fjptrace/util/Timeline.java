@@ -60,6 +60,20 @@ public class Timeline<T extends Enum<?>> {
         return ticks.get(insertionPoint - 1).status;
     }
 
+    public void removeBefore(long time) {
+        // FIXME: Crude and inefficient
+
+        List<Tick> newTicks = new ArrayList<>();
+        for (Tick t : ticks) {
+            if (t.time > time) {
+                newTicks.add(t);
+            }
+        }
+
+        ticks.clear();
+        ticks.addAll(newTicks);
+    }
+
     private class Tick implements Comparable<Tick> {
         private final long time;
         private final T status;
