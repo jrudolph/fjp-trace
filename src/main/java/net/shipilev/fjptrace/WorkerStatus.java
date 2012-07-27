@@ -58,7 +58,7 @@ public class WorkerStatus {
     public WorkerStatusBL getBLStatus(long worker, long time) {
         Timeline<WorkerStatusBL> tl = blTimelines.get(worker);
         if (tl != null) {
-            return tl.getStatus(time);
+            return WorkerStatusBL.deNull(tl.getStatus(time));
         } else {
             return WorkerStatusBL.UNKNOWN;
         }
@@ -67,7 +67,7 @@ public class WorkerStatus {
     public WorkerStatusPK getPKStatus(long worker, long time) {
         Timeline<WorkerStatusPK> tl = pkTimelines.get(worker);
         if (tl != null) {
-            return tl.getStatus(time);
+            return WorkerStatusPK.deNull(tl.getStatus(time));
         } else {
             return WorkerStatusPK.UNKNOWN;
         }
@@ -76,7 +76,7 @@ public class WorkerStatus {
     public WorkerStatusJN getJNStatus(long worker, long time) {
         Timeline<WorkerStatusJN> tl = jnTimelines.get(worker);
         if (tl != null) {
-            return tl.getStatus(time);
+            return WorkerStatusJN.deNull(tl.getStatus(time));
         } else {
             return WorkerStatusJN.UNKNOWN;
         }

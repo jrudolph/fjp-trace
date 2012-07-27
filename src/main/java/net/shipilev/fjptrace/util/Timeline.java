@@ -46,7 +46,18 @@ public class Timeline<T extends Enum<?>> {
         }
 
         int insertionPoint = -i - 1;
-        return ticks.get(Math.max(0, insertionPoint - 1)).status;
+
+        // don't speculate about the past
+        if (insertionPoint <= 0) {
+            return null;
+        }
+
+        // don't speculate about the future
+        if (insertionPoint == ticks.size()) {
+            return null;
+        }
+
+        return ticks.get(insertionPoint - 1).status;
     }
 
     private class Tick implements Comparable<Tick> {

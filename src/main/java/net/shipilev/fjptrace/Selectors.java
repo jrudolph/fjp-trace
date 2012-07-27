@@ -106,7 +106,7 @@ public class Selectors {
                         }
                 }
             case UNKNOWN:
-                return "No data (we know the worker exists, but no events detected)";
+                return "No data (buffers had not yet flushed?)";
         }
         throw new IllegalStateException();
     }

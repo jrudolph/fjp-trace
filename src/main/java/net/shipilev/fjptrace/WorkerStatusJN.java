@@ -19,4 +19,9 @@ public enum WorkerStatusJN {
      */
     UNKNOWN,
 
+    ;
+
+    static WorkerStatusJN deNull(WorkerStatusJN in) {
+        return (in == null) ? UNKNOWN : in;
+    }
 }

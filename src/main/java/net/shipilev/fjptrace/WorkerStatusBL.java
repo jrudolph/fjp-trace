@@ -18,4 +18,11 @@ public enum WorkerStatusBL {
      * The status is unknown
      */
     UNKNOWN,
+
+    ;
+
+    static WorkerStatusBL deNull(WorkerStatusBL in) {
+        return (in == null) ? UNKNOWN : in;
+    }
+
 }
