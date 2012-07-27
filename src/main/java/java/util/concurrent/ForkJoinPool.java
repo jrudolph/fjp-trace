@@ -1048,15 +1048,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
             final int CHUNK_SIZE = 22;
             if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE > BUFFER_LIMIT)) {
-                synchronized (pool.traceWriter) {
-                    try {
-                        pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
-                    } catch (IOException e) {
-                        // should never happen
-                    }
-                }
-                lastWrite = time;
-                traceEventPos = 0;
+                flush();
             }
 
             // All glory to hypno-toad!
@@ -1065,6 +1057,23 @@ public class ForkJoinPool extends AbstractExecutorService {
             U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, System.identityHashCode(task));
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
             traceEventPos += CHUNK_SIZE;
+        }
+
+        /**
+         * Flushes the tracing buffer
+         */
+        final void flush() {
+            synchronized (pool.traceWriter) {
+                if (traceEventPos > 0) {
+                    try {
+                        pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
+                    } catch (IOException e) {
+                        // should never happen
+                    }
+                }
+            }
+            lastWrite = System.nanoTime();
+            traceEventPos = 0;
         }
 
         // Unsafe mechanics
@@ -1417,6 +1426,9 @@ public class ForkJoinPool extends AbstractExecutorService {
             } finally {
                 lock.unlock();
             }
+
+            // flush tracing events
+            w.flush();
         }
 
         long c;                             // adjust ctl counts
