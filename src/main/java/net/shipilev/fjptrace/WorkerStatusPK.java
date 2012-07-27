@@ -13,4 +13,10 @@ public enum WorkerStatusPK {
      * Thread is active
      */
     ACTIVE,
+
+    /**
+     * The status is unknown
+     */
+    UNKNOWN,
+
 }

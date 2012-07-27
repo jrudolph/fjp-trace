@@ -4,7 +4,8 @@ import java.awt.*;
 
 public class Selectors {
 
-    private static final Color COLOR_GRAY = Color.getHSBColor(0f, 0f, 0.9f);
+    private static final Color COLOR_LIGHT_GRAY = new Color(240, 240, 240);
+    private static final Color COLOR_DARK_GRAY = new Color(200, 200, 200);
     private static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
     private static final Color COLOR_LIGHT_RED = new Color(255, 128, 128);
 
@@ -19,7 +20,7 @@ public class Selectors {
                     case ACTIVE:
                         return Color.YELLOW;
                     case PARKED:
-                        return COLOR_GRAY;
+                        return COLOR_DARK_GRAY;
                 }
             case RUNNING:
                 switch (jnStatus) {
@@ -38,6 +39,9 @@ public class Selectors {
                                 return Color.RED;
                         }
                 }
+            case UNKNOWN:
+                return COLOR_LIGHT_GRAY;
+
         }
         throw new IllegalStateException();
     }
@@ -69,6 +73,8 @@ public class Selectors {
                                 return "    --- wait ---    ";
                         }
                 }
+            case UNKNOWN:
+                return "       ??????       ";
         }
         throw new IllegalStateException();
     }
@@ -99,6 +105,8 @@ public class Selectors {
                                 return "Joining task, executing another task, parked on waiting";
                         }
                 }
+            case UNKNOWN:
+                return "No data";
         }
         throw new IllegalStateException();
     }

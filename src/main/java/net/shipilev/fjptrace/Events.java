@@ -16,7 +16,6 @@ public class Events implements Iterable<Event> {
     private long end;
 
     public boolean add(Event event) {
-        workers.add(event.workerId);
         return events.add(event);
     }
 
@@ -60,5 +59,9 @@ public class Events implements Iterable<Event> {
 
     public List<Event> getList() {
         return events;
+    }
+
+    public void addworker(long threadID) {
+        workers.add(threadID);
     }
 }

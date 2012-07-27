@@ -56,14 +56,29 @@ public class WorkerStatus {
     }
 
     public WorkerStatusBL getBLStatus(long worker, long time) {
-        return blTimelines.get(worker).getStatus(time);
+        Timeline<WorkerStatusBL> tl = blTimelines.get(worker);
+        if (tl != null) {
+            return tl.getStatus(time);
+        } else {
+            return WorkerStatusBL.UNKNOWN;
+        }
     }
 
     public WorkerStatusPK getPKStatus(long worker, long time) {
-        return pkTimelines.get(worker).getStatus(time);
+        Timeline<WorkerStatusPK> tl = pkTimelines.get(worker);
+        if (tl != null) {
+            return tl.getStatus(time);
+        } else {
+            return WorkerStatusPK.UNKNOWN;
+        }
     }
 
     public WorkerStatusJN getJNStatus(long worker, long time) {
-        return jnTimelines.get(worker).getStatus(time);
+        Timeline<WorkerStatusJN> tl = jnTimelines.get(worker);
+        if (tl != null) {
+            return tl.getStatus(time);
+        } else {
+            return WorkerStatusJN.UNKNOWN;
+        }
     }
 }

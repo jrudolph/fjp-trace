@@ -59,17 +59,18 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
 
             basetime = Math.min(basetime, time);
 
+            // count workers anyway
+            events.addworker(threadID);
+
             if (count < OFFSET) {
                 continue;
             }
 
-            if (count - LIMIT > OFFSET) {
-                break;
-            }
-
-            Event event = new Event(time, EventType.values()[eventOrd], threadID, taskHC);
-            if (!events.add(event)) {
-                throw new IllegalStateException("Duplicate event: " + event);
+            if (count - LIMIT <= OFFSET) {
+                Event event = new Event(time, EventType.values()[eventOrd], threadID, taskHC);
+                if (!events.add(event)) {
+                    throw new IllegalStateException("Duplicate event: " + event);
+                }
             }
         }
         is.close();

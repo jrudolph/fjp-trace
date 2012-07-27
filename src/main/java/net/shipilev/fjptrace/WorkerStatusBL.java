@@ -13,4 +13,9 @@ public enum WorkerStatusBL {
      * Not executing business logic tasks
      */
     IDLE,
+
+    /**
+     * The status is unknown
+     */
+    UNKNOWN,
 }

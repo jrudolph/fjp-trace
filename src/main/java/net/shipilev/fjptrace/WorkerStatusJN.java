@@ -13,4 +13,10 @@ public enum WorkerStatusJN {
      * Helping to execute other tasks
      */
     JOINING,
+
+    /**
+     * The status is unknown
+     */
+    UNKNOWN,
+
 }
