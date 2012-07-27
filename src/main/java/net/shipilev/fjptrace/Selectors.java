@@ -40,7 +40,7 @@ public class Selectors {
                         }
                 }
             case UNKNOWN:
-                return COLOR_LIGHT_GRAY;
+                return Color.BLACK;
 
         }
         throw new IllegalStateException();
@@ -106,7 +106,7 @@ public class Selectors {
                         }
                 }
             case UNKNOWN:
-                return "No data";
+                return "No data (we know the worker exists, but no events detected)";
         }
         throw new IllegalStateException();
     }
