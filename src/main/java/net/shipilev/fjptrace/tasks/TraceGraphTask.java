@@ -1,6 +1,7 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.QueueStatus;
 import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
@@ -38,11 +39,13 @@ public class TraceGraphTask extends LoggedRecursiveAction {
 
     private final Events events;
     private final WorkerStatus workerStatus;
+    private final QueueStatus queueStatus;
 
-    public TraceGraphTask(Events events, WorkerStatus WorkerStatus) {
+    public TraceGraphTask(Events events, WorkerStatus workerStatus, QueueStatus queueStatus) {
         super("Rendering graph to " + TRACE_GRAPH);
         this.events = events;
-        this.workerStatus = WorkerStatus;
+        this.workerStatus = workerStatus;
+        this.queueStatus = queueStatus;
     }
 
     @Override
@@ -139,6 +142,14 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             lastTick = tick;
         }
 
+        /**
+         * Render external submissions
+         */
+        for (long tick : queueStatus.getTimes()) {
+            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
+            g.drawLine(T_WIDTH, cY, T_WIDTH + W_WIDTH, cY);
+        }
+
         /*
          * Render timeline
          */
@@ -150,7 +161,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
 
         for (long tick = events.getStart(); tick < events.getEnd(); tick += step) {
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
-            g.drawLine(10, cY, WIDTH - 10, cY);
+            g.drawLine(10, cY, T_WIDTH, cY);
             g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick)), 10, cY - 3);
         }
 

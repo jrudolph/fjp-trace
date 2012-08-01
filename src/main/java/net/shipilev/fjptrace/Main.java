@@ -59,11 +59,13 @@ public class Main {
             TaskStatusTask tStatus = new TaskStatusTask(events);
             tStatus.fork();
 
+            WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
+            wqStatus.fork();
+
             ForkJoinTask.invokeAll(
-                    new TraceGraphTask(events, wStatus.join()),
+                    new TraceGraphTask(events, wStatus.join(), wqStatus.join()),
                     new TraceTextTask(events, wStatus.join()),
-                    new TaskStatsRenderTask(events, tStatus.join()),
-                    new WorkerQueueStatusTask(events)
+                    new TaskStatsRenderTask(events, tStatus.join())
             );
         }
     }

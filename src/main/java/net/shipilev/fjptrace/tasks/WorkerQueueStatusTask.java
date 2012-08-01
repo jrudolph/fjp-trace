@@ -34,7 +34,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner == null) {
-                        // assume external task
+                        status.registerExternal(e.time, e.workerId);
                         break;
                     }
 
