@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -83,35 +84,40 @@ public class TraceGraphTask extends LoggedRecursiveAction {
         Map<Long, Multiset<Color>> workerColors = new TreeMap<>();
 
         long count = 0;
-        for (long tick : times) {
+        for (int yTick = 0; yTick < D_HEIGHT; yTick++) {
             if ((count++ & 0xFFFF) == 0) {
                 reportProgress(count*1.0 / times.size());
             }
 
-            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
-            int lY = H_HEIGHT + (int) (D_HEIGHT * (lastTick - events.getStart()) / (events.getEnd() - events.getStart()));
+            int cY = H_HEIGHT + yTick;
+
+            long loTick = (long) ((1.0 * (yTick-1) / D_HEIGHT) * (events.getEnd() - events.getStart()) + events.getStart());
+            long hiTick = (long) ((1.0 * (yTick) / D_HEIGHT) * (events.getEnd() - events.getStart()) + events.getStart());
+
+            Collection<Long> slice = times.tailSet(loTick).headSet(hiTick);
+
+            if (slice.isEmpty()) {
+                slice = Collections.singleton(times.tailSet(loTick).first());
+            }
 
             {
-                for (long w : events.getWorkers()) {
-                    WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
-                    WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
-                    WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
+                for (long tick : slice) {
+                    for (long w : events.getWorkers()) {
+                        WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
+                        WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
+                        WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
 
-                    Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
+                        Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
 
-                    Multiset<Color> ms = workerColors.get(w);
-                    if (ms == null) {
-                        ms = new Multiset<>();
-                        workerColors.put(w, ms);
+                        Multiset<Color> ms = workerColors.get(w);
+                        if (ms == null) {
+                            ms = new Multiset<>();
+                            workerColors.put(w, ms);
+                        }
+                        ms.add(color);
                     }
-                    ms.add(color);
                 }
 
-                // performance: skip rendering over and over again
-                if (cY == lY) {
-                    lastTick = tick;
-                    continue;
-                }
             }
 
             // render predominant color
@@ -126,7 +132,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             int wIndex = 0;
             for (Color color : mColors) {
                 g.setColor(color);
-                g.fillRect(T_WIDTH + wIndex * W_STEP, lY, W_STEP, cY - lY);
+                g.drawLine(T_WIDTH + wIndex * W_STEP, cY, T_WIDTH + (wIndex + 1)* W_STEP, cY);
                 wIndex++;
             }
 
@@ -135,20 +141,19 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             int cIndex = 0;
             for (Color c : mColors) {
                 g.setColor(c);
-                g.fillRect(T_WIDTH + W_WIDTH + P_WIDTH + cIndex * D_STEP, lY, D_STEP, cY - lY);
+                g.drawLine(T_WIDTH + W_WIDTH + P_WIDTH + cIndex * D_STEP, cY, T_WIDTH + W_WIDTH + P_WIDTH + (cIndex + 1) * D_STEP, cY);
                 cIndex++;
             }
 
-            lastTick = tick;
         }
 
         /**
          * Render external submissions
          */
-        for (long tick : queueStatus.getTimes()) {
-            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
-            g.drawLine(T_WIDTH, cY, T_WIDTH + W_WIDTH, cY);
-        }
+//        for (long tick : queueStatus.getTimes()) {
+//            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
+//            g.drawLine(T_WIDTH, cY, T_WIDTH + W_WIDTH, cY);
+//        }
 
         /*
          * Render timeline
