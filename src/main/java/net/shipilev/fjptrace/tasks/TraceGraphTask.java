@@ -97,7 +97,12 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             Collection<Long> slice = times.tailSet(loTick).headSet(hiTick);
 
             if (slice.isEmpty()) {
-                slice = Collections.singleton(times.tailSet(loTick).first());
+                SortedSet<Long> head = times.headSet(hiTick);
+                if (head.isEmpty()) {
+                    slice = Collections.emptyList();
+                } else {
+                    slice = Collections.singleton(head.last());
+                }
             }
 
             {
