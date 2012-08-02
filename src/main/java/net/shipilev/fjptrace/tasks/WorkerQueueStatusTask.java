@@ -45,6 +45,26 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
                     status.register(e.time, owner, currentCount.add(owner, -1));
                     break;
+
+                case PARK:
+                    if (e.taskHC == 0) {
+                        if (currentCount.count(e.workerId) != 0) {
+                            System.err.println("WARNING: parking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
+                            currentCount.removeKey(e.workerId);
+                            status.markInvalid(e.time, e.workerId);
+                        }
+                    }
+                    break;
+
+                case UNPARK:
+                    if (e.taskHC == 0) {
+                        if (currentCount.count(e.workerId) != 0) {
+                            System.err.println("WARNING: unparking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
+                            currentCount.removeKey(e.workerId);
+                            status.markInvalid(e.time, e.workerId);
+                        }
+                    }
+                    break;
             }
         }
 
