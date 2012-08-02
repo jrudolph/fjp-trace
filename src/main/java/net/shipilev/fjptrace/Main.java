@@ -16,6 +16,7 @@
 
 package net.shipilev.fjptrace;
 
+import net.shipilev.fjptrace.tasks.CheckEventsTask;
 import net.shipilev.fjptrace.tasks.QueueGraphTask;
 import net.shipilev.fjptrace.tasks.ReadTask;
 import net.shipilev.fjptrace.tasks.TaskStatsRenderTask;
@@ -64,6 +65,7 @@ public class Main {
             wqStatus.fork();
 
             ForkJoinTask.invokeAll(
+                    new CheckEventsTask(events),
                     new QueueGraphTask(events, wqStatus.join()),
                     new TraceGraphTask(events, wStatus.join(), wqStatus.join()),
                     new TraceTextTask(events, wStatus.join()),
