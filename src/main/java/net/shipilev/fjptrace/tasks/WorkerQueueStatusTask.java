@@ -3,9 +3,13 @@ package net.shipilev.fjptrace.tasks;
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.QueueStatus;
+import net.shipilev.fjptrace.WorkerStatusPK;
+import net.shipilev.fjptrace.util.Multiset;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
@@ -22,11 +26,12 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
         QueueStatus status = new QueueStatus(events.getWorkers());
 
         Map<Integer, Long> taskToWorker = new HashMap<>();
+        Multiset<Long> currentCount = new Multiset<>();
 
         for (Event e : events) {
             switch (e.eventType) {
                 case FORK:
-                    status.add(e.time, e.workerId);
+                    status.register(e.time, e.workerId, currentCount.add(e.workerId));
                     taskToWorker.put(e.taskHC, e.workerId);
                     break;
 
@@ -38,12 +43,11 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                         break;
                     }
 
-                    status.remove(e.time, owner);
+                    status.register(e.time, owner, currentCount.add(owner, -1));
                     break;
             }
         }
 
-        System.err.println("maxDepth = " + status.getMaxCount());
         return status;
     }
 }

@@ -145,14 +145,6 @@ public class QueueGraphTask extends LoggedRecursiveAction {
 
         }
 
-        /**
-         * Render external submissions
-         */
-//        for (long tick : queueStatus.getTimes()) {
-//            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
-//            g.drawLine(T_WIDTH, cY, T_WIDTH + W_WIDTH, cY);
-//        }
-
         /*
          * Render timeline
          */
@@ -173,28 +165,17 @@ public class QueueGraphTask extends LoggedRecursiveAction {
          */
         final int LEG_STEP = 20;
 
-        Set<Color> alreadyPrinted = new HashSet<>();
+        g.drawString("Queue depth: ", T_WIDTH, LEG_STEP);
 
-        int index = 1;
-        for (WorkerStatusBL statusBL : WorkerStatusBL.values()) {
-            for (WorkerStatusPK statusPK : WorkerStatusPK.values()) {
-                for (WorkerStatusJN statusJN : WorkerStatusJN.values()) {
-                    int cY = index * LEG_STEP;
-
-                    Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
-                    if (alreadyPrinted.add(color)) {
-                        g.setColor(color);
-                        g.fillRect(T_WIDTH, cY, LEG_STEP, LEG_STEP);
-
-                        g.setColor(Color.BLACK);
-                        g.drawString(Selectors.selectTextLong(statusBL, statusPK, statusJN), T_WIDTH + LEG_STEP + 5, cY + LEG_STEP - 5);
-
-                        index++;
-                    }
-                }
-            }
+        long maxDepth = queueStatus.getMaxCount();
+        int STEP = (int) Math.max(1, W_WIDTH / maxDepth);
+        for (int d = 0; d < maxDepth; d++) {
+            Color color = new Color(0, 1.0f * d / maxDepth, 0);
+            g.setColor(color);
+            g.fillRect(T_WIDTH + d * STEP, LEG_STEP * 2, STEP, LEG_STEP);
         }
 
+        g.setColor(Color.BLACK);
         g.drawString("Thread timelines:", T_WIDTH, H_HEIGHT - 5);
         g.drawString("State distribution:", T_WIDTH + W_WIDTH + P_WIDTH, H_HEIGHT - 5);
 

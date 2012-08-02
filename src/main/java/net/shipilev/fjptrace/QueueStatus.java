@@ -25,15 +25,7 @@ public class QueueStatus {
         }
     }
 
-    public void add(long time, long worker) {
-        long count = currentCount.add(worker);
-        times.add(time);
-        workerTaskCounts.get(worker).add(time, count);
-        maxCount = Math.max(count, maxCount);
-    }
-
-    public void remove(long time, long worker) {
-        long count = currentCount.add(worker, -1);
+    public void register(long time, long worker, long count) {
         times.add(time);
         workerTaskCounts.get(worker).add(time, count);
         maxCount = Math.max(count, maxCount);
@@ -59,5 +51,9 @@ public class QueueStatus {
         } else {
             return 0;
         }
+    }
+
+    public void markInvalid(long time, long workerId) {
+        workerTaskCounts.get(workerId).removeBefore(time);
     }
 }
