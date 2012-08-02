@@ -21,23 +21,23 @@ public class CheckEventsTask extends LoggedRecursiveAction {
 
     @Override
     public void doWork() throws Exception {
-        Set<Integer> executingTasks = new HashSet<>();
+        Map<Integer, Event> executingTasks = new HashMap<>();
 
         for (Event e : events) {
 
             switch (e.eventType) {
                 case EXEC: {
-                    boolean ok = executingTasks.add(e.taskHC);
-                    if (!ok) {
-                        System.err.println("Already executing the task: " + e.time + " " + e.toString());
+                    Event prev = executingTasks.put(e.taskHC, e);
+                    if (prev != null) {
+                        System.err.println("WARNING: Already executing the task! This event: " + e.toString() + ", but executed by " + prev.toString());
                     }
                     break;
                 }
 
                 case EXECED: {
-                    boolean ok = executingTasks.remove(e.taskHC);
-                    if (!ok) {
-                        System.err.println("Not executing the task: " + e.toString());
+                    Event prev = executingTasks.remove(e.taskHC);
+                    if (prev == null) {
+                        System.err.println("WARNING: Finishing not yet started task! This event: " + e.toString());
                     }
                     break;
                 }

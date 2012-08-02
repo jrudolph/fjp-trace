@@ -64,8 +64,9 @@ public class Main {
             WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
             wqStatus.fork();
 
+            new CheckEventsTask(events).invoke();
+
             ForkJoinTask.invokeAll(
-                    new CheckEventsTask(events),
                     new QueueGraphTask(events, wqStatus.join()),
                     new TraceGraphTask(events, wStatus.join(), wqStatus.join()),
                     new TraceTextTask(events, wStatus.join()),

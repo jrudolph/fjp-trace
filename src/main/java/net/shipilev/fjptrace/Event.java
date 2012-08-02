@@ -89,6 +89,6 @@ public class Event implements Comparable<Event> {
 
     @Override
     public String toString() {
-        return eventType + "(" + taskHC + ")";
+        return time + "ns: " + eventType + "(" + taskHC + ") [w: " + workerId + "]";
     }
 }
