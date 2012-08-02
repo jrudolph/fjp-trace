@@ -83,10 +83,9 @@ public class TraceGraphTask extends LoggedRecursiveAction {
 
         Map<Long, Multiset<Color>> workerColors = new TreeMap<>();
 
-        long count = 0;
         for (int yTick = 0; yTick < D_HEIGHT; yTick++) {
-            if ((count++ & 0xFFFF) == 0) {
-                reportProgress(count*1.0 / times.size());
+            if ((yTick & 0xF) == 0) {
+                reportProgress(yTick * 1.0 / D_HEIGHT);
             }
 
             int cY = H_HEIGHT + yTick;
