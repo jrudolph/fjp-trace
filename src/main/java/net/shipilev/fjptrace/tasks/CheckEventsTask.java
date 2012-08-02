@@ -22,6 +22,12 @@ public class CheckEventsTask extends LoggedRecursiveAction {
         for (Event e : events) {
 
             switch (e.eventType) {
+                case FORK:
+                    if (executingTasks.containsKey(e.taskHC)) {
+                        System.err.println("WARNING: Forking already executing task! This event: " + e.toString());
+                    }
+                    break;
+
                 case EXEC: {
                     Event prev = executingTasks.put(e.taskHC, e);
                     if (prev != null) {
