@@ -235,6 +235,10 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
     static final int SIGNAL      = 0x00010000;  // must be >= 1 << 16
     static final int SMASK       = 0x0000ffff;  // short bits for tags
 
+    protected ForkJoinTask() {
+        status = (short) ThreadLocalRandom.current().nextInt(0xffff);
+    }
+
     /**
      * Marks completion and wakes up threads waiting to join this
      * task.
@@ -1123,7 +1127,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         if ((status & DONE_MASK) == EXCEPTIONAL)
             clearExceptionalCompletion();
         else
-            status = 0;
+            status = (short) ThreadLocalRandom.current().nextInt(0xffff);
     }
 
     /**
@@ -1370,7 +1374,8 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final short getForkJoinTaskTag() {
-        return (short)status;
+        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
+//        return (short)status;
     }
 
     /**
@@ -1381,11 +1386,12 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final short setForkJoinTaskTag(short tag) {
-        for (int s;;) {
-            if (U.compareAndSwapInt(this, STATUS, s = status,
-                                    (s & ~SMASK) | (tag & SMASK)))
-                return (short)s;
-        }
+        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
+//        for (int s;;) {
+//            if (U.compareAndSwapInt(this, STATUS, s = status,
+//                                    (s & ~SMASK) | (tag & SMASK)))
+//                return (short)s;
+//        }
     }
 
     /**
@@ -1403,13 +1409,14 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final boolean compareAndSetForkJoinTaskTag(short e, short tag) {
-        for (int s;;) {
-            if ((short)(s = status) != e)
-                return false;
-            if (U.compareAndSwapInt(this, STATUS, s,
-                                    (s & ~SMASK) | (tag & SMASK)))
-                return true;
-        }
+        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
+//        for (int s;;) {
+//            if ((short)(s = status) != e)
+//                return false;
+//            if (U.compareAndSwapInt(this, STATUS, s,
+//                                    (s & ~SMASK) | (tag & SMASK)))
+//                return true;
+//        }
     }
 
     /**

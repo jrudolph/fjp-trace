@@ -1054,7 +1054,8 @@ public class ForkJoinPool extends AbstractExecutorService {
             // All glory to hypno-toad!
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
             U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
-            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, System.identityHashCode(task));
+            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10,
+                    (task == null) ? 0 : System.identityHashCode(task) ^ (short)task.status);
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
             traceEventPos += CHUNK_SIZE;
         }
