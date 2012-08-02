@@ -25,8 +25,6 @@ public class CheckEventsTask extends LoggedRecursiveAction {
 
             switch (e.eventType) {
                 case SUBMIT: {
-                    System.err.println("Submission: " + e);
-
                     Event prev = submittedTasks.put(e.taskHC, e);
                     if (prev != null) {
                         System.err.println("WARNING: Submitting the same task twice! This event: " + e + ", other event was " + prev);
