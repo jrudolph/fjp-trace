@@ -19,14 +19,14 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
     @Override
     public QueueStatus doWork() throws Exception {
 
-        QueueStatus status = new QueueStatus();
+        QueueStatus status = new QueueStatus(events.getWorkers());
 
         Map<Integer, Long> taskToWorker = new HashMap<>();
 
         for (Event e : events) {
             switch (e.eventType) {
                 case FORK:
-                    status.registerAdd(e.time, e.workerId);
+                    status.add(e.time, e.workerId);
                     taskToWorker.put(e.taskHC, e.workerId);
                     break;
 
@@ -34,19 +34,16 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner == null) {
-                        status.registerExternal(e.time, e.workerId);
+                        // assume external
                         break;
                     }
 
-                    if (owner != e.workerId) {
-                        status.registerSteal(e.time, owner);
-                    } else {
-                        status.registerExec(e.time, owner);
-                    }
+                    status.remove(e.time, owner);
                     break;
             }
         }
 
+        System.err.println("maxDepth = " + status.getMaxCount());
         return status;
     }
 }

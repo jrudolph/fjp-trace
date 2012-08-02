@@ -30,17 +30,18 @@ public class Multiset<T> {
 
     private final HashMap<T, Long> counts = new HashMap<>();
 
-    public void add(T t) {
-        add(t, 1);
+    public long add(T t) {
+        return add(t, 1);
     }
 
-    public void add(T t, long inc) {
+    public long add(T t, long inc) {
         Long count = counts.get(t);
         if (count == null) {
             count = 0L;
         }
         count += inc;
         counts.put(t, count);
+        return count;
     }
 
     public void remove(T t, long i) {

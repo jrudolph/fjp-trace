@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class Timeline<T extends Enum<?>> {
+public class Timeline<T> {
 
     private final List<Tick> ticks = new ArrayList<>();
 

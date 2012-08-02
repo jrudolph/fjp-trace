@@ -2,16 +2,15 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.QueueStatus;
-import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusBL;
 import net.shipilev.fjptrace.WorkerStatusJN;
 import net.shipilev.fjptrace.WorkerStatusPK;
+import net.shipilev.fjptrace.util.Multiset;
 
 import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -26,10 +25,10 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-public class TraceGraphTask extends LoggedRecursiveAction {
+public class QueueGraphTask extends LoggedRecursiveAction {
     private static final int HEIGHT = Integer.getInteger("height", 2000);
     private static final int WIDTH = Integer.getInteger("width", 1000);
-    private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
+    private static final String TRACE_GRAPH = System.getProperty("queue.graph", "queue-graph.png");
 
     private static final Comparator<Color> COLOR_COMPARATOR = new Comparator<Color>() {
         @Override
@@ -39,13 +38,11 @@ public class TraceGraphTask extends LoggedRecursiveAction {
     };
 
     private final Events events;
-    private final WorkerStatus workerStatus;
     private final QueueStatus queueStatus;
 
-    public TraceGraphTask(Events events, WorkerStatus workerStatus, QueueStatus queueStatus) {
-        super("Rendering graph to " + TRACE_GRAPH);
+    public QueueGraphTask(Events events, QueueStatus queueStatus) {
+        super("Rendering queue stats to " + TRACE_GRAPH);
         this.events = events;
-        this.workerStatus = workerStatus;
         this.queueStatus = queueStatus;
     }
 
@@ -65,7 +62,7 @@ public class TraceGraphTask extends LoggedRecursiveAction {
         /*
           Compute pivot points
         */
-        SortedSet<Long> times = workerStatus.getTimes();
+        SortedSet<Long> times = queueStatus.getTimes();
 
         /*
           Render it!
@@ -105,11 +102,10 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             {
                 for (long tick : slice) {
                     for (long w : events.getWorkers()) {
-                        WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
-                        WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
-                        WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
+                        long depth = Math.max(0, queueStatus.getDepth(tick, w));
+                        long maxDepth = queueStatus.getMaxCount();
 
-                        Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
+                        Color color = new Color(0, 1.0f * depth / maxDepth, 0);
 
                         Multiset<Color> ms = workerColors.get(w);
                         if (ms == null) {
