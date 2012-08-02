@@ -4,10 +4,7 @@ import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
-import net.shipilev.fjptrace.WorkerStatusBL;
-import net.shipilev.fjptrace.WorkerStatusJN;
-import net.shipilev.fjptrace.WorkerStatusPK;
-import net.shipilev.fjptrace.tasks.LoggedRecursiveAction;
+import net.shipilev.fjptrace.WorkerStatusHolder;
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
@@ -65,11 +62,8 @@ public class TraceTextTask extends LoggedRecursiveAction {
                 if (w == e.workerId) {
                     pw.format("%20s", e.eventType + "(" + e.taskHC + ")");
                 } else {
-                    WorkerStatusBL statusBL = workerStatus.getBLStatus(w, e.time);
-                    WorkerStatusPK statusPK = workerStatus.getPKStatus(w, e.time);
-                    WorkerStatusJN statusJN = workerStatus.getJNStatus(w, e.time);
-
-                    pw.print(Selectors.selectText(statusBL, statusPK, statusJN));
+                    WorkerStatusHolder status = workerStatus.getStatus(w, e.time);
+                    pw.print(Selectors.selectText(status.blStatus, status.pkStatus, status.jnStatus));
                 }
             }
             pw.println();

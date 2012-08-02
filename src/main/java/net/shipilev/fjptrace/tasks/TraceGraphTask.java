@@ -2,6 +2,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.QueueStatus;
+import net.shipilev.fjptrace.WorkerStatusHolder;
 import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
@@ -105,11 +106,8 @@ public class TraceGraphTask extends LoggedRecursiveAction {
             {
                 for (long tick : slice) {
                     for (long w : events.getWorkers()) {
-                        WorkerStatusBL statusBL = workerStatus.getBLStatus(w, tick);
-                        WorkerStatusPK statusPK = workerStatus.getPKStatus(w, tick);
-                        WorkerStatusJN statusJN = workerStatus.getJNStatus(w, tick);
-
-                        Color color = Selectors.selectColor(statusBL, statusPK, statusJN);
+                        WorkerStatusHolder status = workerStatus.getStatus(w, tick);
+                        Color color = Selectors.selectColor(status.blStatus, status.pkStatus, status.jnStatus);
 
                         Multiset<Color> ms = workerColors.get(w);
                         if (ms == null) {

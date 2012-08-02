@@ -1,8 +1,5 @@
 package net.shipilev.fjptrace;
 
-/**
- * Thread status
- */
 public enum WorkerStatusPK {
     /**
      * Thread is parked
