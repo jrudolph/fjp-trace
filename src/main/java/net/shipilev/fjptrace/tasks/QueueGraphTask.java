@@ -54,7 +54,7 @@ public class QueueGraphTask extends AbstractGraphTask {
     protected void renderLegend(Graphics2D g) {
         final int LEG_STEP = 20;
 
-        g.drawString("Queue depth: ", T_WIDTH, LEG_STEP);
+        g.drawString("Elements in worker queue: ", T_WIDTH, LEG_STEP);
 
         long maxDepth = queueStatus.getMaxCount();
         int STEP = (int) Math.max(1, W_WIDTH / maxDepth);
@@ -62,6 +62,11 @@ public class QueueGraphTask extends AbstractGraphTask {
             Color color = new Color(0, 1.0f * d / maxDepth, 0);
             g.setColor(color);
             g.fillRect(T_WIDTH + d * STEP, LEG_STEP * 2, STEP, LEG_STEP);
+        }
+
+        for (int d = 0; d < maxDepth; d += Math.max(1, maxDepth / 10)) {
+            g.setColor(Color.BLACK);
+            g.drawString(String.valueOf(d), Math.round(T_WIDTH + (d + 0.5)*STEP), LEG_STEP * 4);
         }
     }
 
