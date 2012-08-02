@@ -2,13 +2,9 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
-import net.shipilev.fjptrace.TaskStatus;
-import net.shipilev.fjptrace.util.Multiset;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class CheckEventsTask extends LoggedRecursiveAction {
 

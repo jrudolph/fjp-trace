@@ -1,12 +1,6 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
-import net.shipilev.fjptrace.QueueStatus;
-import net.shipilev.fjptrace.Selectors;
-import net.shipilev.fjptrace.WorkerStatus;
-import net.shipilev.fjptrace.WorkerStatusBL;
-import net.shipilev.fjptrace.WorkerStatusJN;
-import net.shipilev.fjptrace.WorkerStatusPK;
 import net.shipilev.fjptrace.util.Multiset;
 
 import javax.imageio.ImageIO;
@@ -17,13 +11,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractGraphTask extends LoggedRecursiveAction {

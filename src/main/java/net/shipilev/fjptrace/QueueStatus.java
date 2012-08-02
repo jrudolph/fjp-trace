@@ -3,12 +3,9 @@ package net.shipilev.fjptrace;
 import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.util.Timeline;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 

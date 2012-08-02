@@ -1,7 +1,6 @@
 package net.shipilev.fjptrace.tasks;
 
 import java.io.PrintWriter;
-import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.RecursiveTask;
 
 public abstract class LoggedRecursiveTask<V> extends RecursiveTask<V> {

@@ -1,8 +1,8 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
-import net.shipilev.fjptrace.util.PairedList;
 import net.shipilev.fjptrace.TaskStatus;
+import net.shipilev.fjptrace.util.PairedList;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;

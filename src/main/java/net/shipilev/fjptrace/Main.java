@@ -16,7 +16,6 @@
 
 package net.shipilev.fjptrace;
 
-import net.shipilev.fjptrace.tasks.AbstractGraphTask;
 import net.shipilev.fjptrace.tasks.CheckEventsTask;
 import net.shipilev.fjptrace.tasks.QueueGraphTask;
 import net.shipilev.fjptrace.tasks.ReadTask;

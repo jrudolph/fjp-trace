@@ -1,31 +1,17 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
-import net.shipilev.fjptrace.QueueStatus;
-import net.shipilev.fjptrace.WorkerStatusHolder;
-import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusBL;
+import net.shipilev.fjptrace.WorkerStatusHolder;
 import net.shipilev.fjptrace.WorkerStatusJN;
 import net.shipilev.fjptrace.WorkerStatusPK;
 
-import javax.imageio.ImageIO;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.awt.*;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 public class TraceGraphTask extends AbstractGraphTask {
 

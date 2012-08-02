@@ -2,8 +2,8 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
-import net.shipilev.fjptrace.util.Multiset;
 import net.shipilev.fjptrace.TaskStatus;
+import net.shipilev.fjptrace.util.Multiset;
 
 import java.util.HashMap;
 import java.util.Map;

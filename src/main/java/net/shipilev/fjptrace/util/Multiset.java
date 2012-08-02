@@ -16,9 +16,8 @@
 
 package net.shipilev.fjptrace.util;
 
-import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Dirty and naive multiset implementation.
