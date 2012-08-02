@@ -16,6 +16,8 @@
 
 package net.shipilev.fjptrace;
 
+import java.util.concurrent.TimeUnit;
+
 public class Event implements Comparable<Event> {
     public long time;
     public final EventType eventType;
@@ -89,6 +91,6 @@ public class Event implements Comparable<Event> {
 
     @Override
     public String toString() {
-        return time + "ns: " + eventType + "(" + taskHC + ") [w: " + workerId + "]";
+        return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: " + eventType + "(" + taskHC + ") [w: " + workerId + "]";
     }
 }

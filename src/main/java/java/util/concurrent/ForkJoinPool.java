@@ -713,6 +713,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                         U.putObject(a, (long)j, task);    // don't need "ordered"
                         top = s + 1;
                         submitted = true;
+                        registerEvent(EventType.SUBMIT, task);
                     }
                 } finally {
                     runState = 0;                         // unlock
@@ -1456,7 +1457,6 @@ public class ForkJoinPool extends AbstractExecutorService {
      * @param task the task. Caller must ensure non-null.
      */
     private void doSubmit(ForkJoinTask<?> task) {
-        registerEvent(EventType.SUBMIT, task);
         Submitter s = submitters.get();
         for (int r = s.seed, m = submitMask;;) {
             WorkQueue[] ws; WorkQueue q;
@@ -2113,7 +2113,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                 }
             }
             if (U.compareAndSwapLong(this, CTL, c, c | STOP_BIT)) {
-                for (int pass = 0; pass < 3; ++pass) {
+                for (int pass = 0; pass < 4; ++pass) {
                     WorkQueue[] ws = workQueues;
                     if (ws != null) {
                         WorkQueue w;
@@ -2123,8 +2123,12 @@ public class ForkJoinPool extends AbstractExecutorService {
                                 w.runState = -1;
                                 if (pass > 0) {
                                     w.cancelAll();
-                                    if (pass > 1)
+                                    if (pass > 1) {
                                         w.interruptOwner();
+                                        if (pass > 2) {
+                                            w.flush();
+                                        }
+                                    }
                                 }
                             }
                         }

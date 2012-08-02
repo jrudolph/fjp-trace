@@ -2,8 +2,10 @@ package net.shipilev.fjptrace;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -43,6 +45,15 @@ public class Events implements Iterable<Event> {
             assert e != null : "events[" + c + "] is null";
 
         }
+
+        // filter out submitters
+        Set<Long> onlySubmissionWorkers = new HashSet<>(workers);
+        for (Event e : events) {
+            if (e.eventType != EventType.SUBMIT) {
+                onlySubmissionWorkers.remove(e.workerId);
+            }
+        }
+        workers.removeAll(onlySubmissionWorkers);
 
         start = events.get(0).time;
         end = events.get(events.size() - 1).time;
