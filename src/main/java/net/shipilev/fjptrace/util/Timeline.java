@@ -25,7 +25,7 @@ import java.util.TreeSet;
 
 public class Timeline<T> {
 
-    private final List<Tick> ticks = new ArrayList<>();
+    private List<Tick> ticks = new ArrayList<>();
 
     private volatile boolean isSorted;
 
@@ -34,14 +34,16 @@ public class Timeline<T> {
         isSorted = false;
     }
 
-    public T getStatus(long time) {
+    public T getStatus(long time, boolean makePrediction) {
         if (!isSorted) {
-            Collections.sort(ticks);
+            List<Tick> newTicks = new ArrayList<>(ticks);
+            Collections.sort(newTicks);
+            ticks = newTicks;
             isSorted = true;
         }
 
         int i = Collections.binarySearch(ticks, new Tick(time, null));
-        if (i > 0) {
+        if (i >= 0) {
             return ticks.get(i).status;
         }
 
@@ -53,11 +55,15 @@ public class Timeline<T> {
         }
 
         // don't speculate about the future
-        if (insertionPoint == ticks.size()) {
+        if (!makePrediction && insertionPoint == ticks.size()) {
             return null;
         }
 
         return ticks.get(insertionPoint - 1).status;
+    }
+
+    public T getStatus(long time) {
+        return getStatus(time, false);
     }
 
     public void removeBefore(long time) {
@@ -73,6 +79,7 @@ public class Timeline<T> {
         ticks.clear();
         ticks.addAll(newTicks);
     }
+
 
     private class Tick implements Comparable<Tick> {
         private final long time;
