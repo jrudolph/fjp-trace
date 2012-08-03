@@ -225,7 +225,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
     static final int SMASK       = 0x0000ffff;  // short bits for tags
 
     protected ForkJoinTask() {
-        status = (short) ThreadLocalRandom.current().nextInt(0xffff);
+        status = (ThreadLocalRandom.current().nextInt() & SMASK);
     }
 
     /**
@@ -1116,7 +1116,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         if ((status & DONE_MASK) == EXCEPTIONAL)
             clearExceptionalCompletion();
         else
-            status = (short) ThreadLocalRandom.current().nextInt(0xffff);
+            status = (ThreadLocalRandom.current().nextInt() & SMASK);
     }
 
     /**
