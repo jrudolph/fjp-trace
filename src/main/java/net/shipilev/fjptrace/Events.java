@@ -2,9 +2,11 @@ package net.shipilev.fjptrace;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,8 +39,6 @@ public class Events implements Iterable<Event> {
             throw new IllegalStateException("No events in the log");
         }
 
-        System.out.println(events.size() + " events read");
-
         // assert all events are populated
         for (int c = 0; c < events.size(); c++) {
             Event e = events.get(c);
@@ -54,6 +54,31 @@ public class Events implements Iterable<Event> {
             }
         }
         workers.removeAll(onlySubmissionWorkers);
+
+        // cut off when some thread has no more events (assume we miss something beyond)
+        Map<Long, Long> lastTime = new HashMap<>();
+        for (Event e : events) {
+            lastTime.put(e.workerId, e.time);
+        }
+
+        long cutoff = Long.MAX_VALUE;
+        for (Long time : lastTime.values()) {
+            cutoff = Math.min(cutoff, time);
+        }
+
+        List<Event> newEvents = new ArrayList<>();
+        for (Event e : events) {
+            if (e.time <= cutoff) {
+                newEvents.add(e);
+            }
+        }
+
+        System.out.println(events.size() + " events read");
+
+        events.clear();
+        events.addAll(newEvents);
+
+        System.out.println(events.size() + " events after cutoff");
 
         start = events.get(0).time;
         end = events.get(events.size() - 1).time;
