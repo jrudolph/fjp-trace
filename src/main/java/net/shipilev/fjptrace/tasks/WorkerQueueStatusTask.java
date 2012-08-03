@@ -3,6 +3,7 @@ package net.shipilev.fjptrace.tasks;
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.QueueStatus;
+import net.shipilev.fjptrace.util.Multimap;
 import net.shipilev.fjptrace.util.Multiset;
 
 import java.util.HashMap;
@@ -38,11 +39,11 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     taskToWorker.put(e.taskHC, e.workerId);
                     break;
 
-                case EXEC:
+                case EXEC: {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner == null) {
-                        System.err.println("WARNING: events inconsistency: no owner for executing task");
+                        System.err.println("WARNING: No owner is recorded for executing task! This event: " + e);
                         break;
                     }
 
@@ -52,6 +53,18 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
                     status.register(e.time, owner, currentCount.add(owner, -1));
                     break;
+                }
+
+                case JOINED: {
+                    Long owner = taskToWorker.remove(e.taskHC);
+
+                    if (owner != null) {
+                        System.err.println("WARNING: Joined the task without prior record of execution, assume it had executed, fixing up the queue. This event: " + e);
+                        status.register(e.time, owner, currentCount.add(owner, -1));
+                    }
+
+                    break;
+                }
 
                 case PARK:
                     if (e.taskHC == 0) {
