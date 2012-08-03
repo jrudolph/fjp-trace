@@ -50,7 +50,10 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
                         taskToID.put(e.taskHC, id);
                     }
 
-                    subgraphs.register(e.time, e.workerId, taskToID.get(e.taskHC));
+                    Integer thisTaskId = taskToID.get(e.taskHC);
+                    if (thisTaskId != null) {
+                        subgraphs.register(e.time, e.workerId, thisTaskId);
+                    }
 
                     currentExec.put(e.workerId, e.taskHC);
 
@@ -66,7 +69,10 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
                         currentExec.put(e.workerId, parent);
 
                         // next task is parent
-                        subgraphs.register(e.time, e.workerId, taskToID.get(parent));
+                        Integer parentId = taskToID.get(parent);
+                        if (parentId != null) {
+                            subgraphs.register(e.time, e.workerId, parentId);
+                        }
                     } else {
                         // this is parent, no other tasks
                         subgraphs.register(e.time, e.workerId, TaskSubgraphs.NO_ID);
