@@ -38,7 +38,7 @@ public class TaskSubgraphRenderTask extends AbstractGraphTask {
             if (id != TaskSubgraphs.NO_ID) {
                 return colors.get(id);
             } else {
-                return Selectors.COLOR_LIGHT_GRAY;
+                return Selectors.COLOR_DARK_GRAY;
             }
         } else {
             return Color.BLACK;
