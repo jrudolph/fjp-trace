@@ -14,6 +14,8 @@ public class TaskSubgraphs {
     private final SortedSet<Long> times;
     private final SortedSet<Integer> ids;
 
+    public static final int NO_ID = -1;
+
     public TaskSubgraphs(Collection<Long> workers) {
         this.times = new TreeSet<>();
         this.ids = new TreeSet<>();

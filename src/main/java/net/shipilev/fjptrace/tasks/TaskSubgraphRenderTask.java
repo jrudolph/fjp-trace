@@ -1,7 +1,9 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.TaskSubgraphs;
+import net.shipilev.fjptrace.WorkerStatusHolder;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -33,7 +35,11 @@ public class TaskSubgraphRenderTask extends AbstractGraphTask {
     protected Color getColor(long tick, long worker) {
         Integer id = data.get(tick, worker);
         if (id != null) {
-            return colors.get(id);
+            if (id != TaskSubgraphs.NO_ID) {
+                return colors.get(id);
+            } else {
+                return Selectors.COLOR_LIGHT_GRAY;
+            }
         } else {
             return Color.BLACK;
         }

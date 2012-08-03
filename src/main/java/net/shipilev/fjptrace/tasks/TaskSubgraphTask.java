@@ -23,19 +23,19 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
         Map<Long, Integer> currentExec = new HashMap<>();
         Map<Integer, Integer> parentTasks = new HashMap<>();
 
-        Map<Integer, Integer> externalRootTasks = new HashMap<>();
+        Map<Integer, Integer> taskToID = new HashMap<>();
 
         int externalTaskID = 0;
 
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT:
-                    externalRootTasks.put(e.taskHC, externalTaskID++);
+                    taskToID.put(e.taskHC, externalTaskID++);
                     break;
 
                 case FORK: {
                     Integer currentTask = currentExec.get(e.workerId);
-                    externalRootTasks.put(e.taskHC, externalRootTasks.get(currentTask));
+                    taskToID.put(e.taskHC, taskToID.get(currentTask));
                     break;
                 }
 
@@ -43,8 +43,15 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
                     Integer currentTask = currentExec.get(e.workerId);
                     if (currentTask != null) {
                         parentTasks.put(e.taskHC, currentTask);
-                        externalRootTasks.put(e.taskHC, externalRootTasks.get(currentTask));
                     }
+
+                    Integer id = taskToID.get(currentTask);
+                    if (id != null) {
+                        taskToID.put(e.taskHC, id);
+                    }
+
+                    subgraphs.register(e.time, e.workerId, taskToID.get(e.taskHC));
+
                     currentExec.put(e.workerId, e.taskHC);
 
                     break;
@@ -57,12 +64,14 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
                     if (parent != null) {
                         // getting back to parent
                         currentExec.put(e.workerId, parent);
+
+                        // next task is parent
+                        subgraphs.register(e.time, e.workerId, taskToID.get(parent));
+                    } else {
+                        // this is parent, no other tasks
+                        subgraphs.register(e.time, e.workerId, TaskSubgraphs.NO_ID);
                     }
 
-                    Integer id = externalRootTasks.remove(e.taskHC);
-                    if (id != null) {
-                        subgraphs.register(e.time, e.workerId, id);
-                    }
                     break;
             }
         }

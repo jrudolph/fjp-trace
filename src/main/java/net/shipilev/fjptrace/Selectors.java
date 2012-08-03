@@ -4,10 +4,10 @@ import java.awt.*;
 
 public class Selectors {
 
-    private static final Color COLOR_LIGHT_GRAY = new Color(240, 240, 240);
-    private static final Color COLOR_DARK_GRAY = new Color(200, 200, 200);
-    private static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
-    private static final Color COLOR_LIGHT_RED = new Color(255, 128, 128);
+    public static final Color COLOR_LIGHT_GRAY = new Color(240, 240, 240);
+    public static final Color COLOR_DARK_GRAY = new Color(200, 200, 200);
+    public static final Color COLOR_DARK_GREEN = new Color(0, 128, 0);
+    public static final Color COLOR_LIGHT_RED = new Color(255, 128, 128);
 
     private Selectors() {
         // prevent instantiation
