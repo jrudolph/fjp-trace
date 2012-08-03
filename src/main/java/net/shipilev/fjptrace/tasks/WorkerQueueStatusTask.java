@@ -10,6 +10,8 @@ import java.util.Map;
 
 public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
+    public static final long SUBMISSION_WORKER = -1;
+
     private final Events events;
 
     public WorkerQueueStatusTask(Events events) {
@@ -27,6 +29,10 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
         for (Event e : events) {
             switch (e.eventType) {
+                case SUBMIT:
+                    taskToWorker.put(e.taskHC, SUBMISSION_WORKER);
+                    break;
+
                 case FORK:
                     status.register(e.time, e.workerId, currentCount.add(e.workerId));
                     taskToWorker.put(e.taskHC, e.workerId);
@@ -36,7 +42,11 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner == null) {
-                        // assume external
+                        System.err.println("WARNING: events inconsistency: no owner for executing task");
+                        break;
+                    }
+
+                    if (owner == SUBMISSION_WORKER) {
                         break;
                     }
 
