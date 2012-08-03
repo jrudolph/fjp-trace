@@ -22,6 +22,8 @@ import net.shipilev.fjptrace.tasks.QueueGraphTask;
 import net.shipilev.fjptrace.tasks.ReadTask;
 import net.shipilev.fjptrace.tasks.TaskStatsRenderTask;
 import net.shipilev.fjptrace.tasks.TaskStatusTask;
+import net.shipilev.fjptrace.tasks.TaskSubgraphRenderTask;
+import net.shipilev.fjptrace.tasks.TaskSubgraphTask;
 import net.shipilev.fjptrace.tasks.TraceGraphTask;
 import net.shipilev.fjptrace.tasks.TraceTextTask;
 import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
@@ -65,9 +67,13 @@ public class Main {
             WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
             wqStatus.fork();
 
+            TaskSubgraphTask tsStatus = new TaskSubgraphTask(events);
+            tsStatus.fork();
+
             new CheckEventsTask(events).invoke();
 
             ForkJoinTask.invokeAll(
+                    new TaskSubgraphRenderTask(events, tsStatus.join()),
                     new QueueGraphTask(events, wqStatus.join()),
                     new TraceGraphTask(events, wStatus.join()),
                     new DumpEventStreamTask(events),
