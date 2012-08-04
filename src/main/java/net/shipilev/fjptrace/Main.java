@@ -30,33 +30,43 @@ import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
 import net.shipilev.fjptrace.tasks.WorkerStatusTask;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        String filename = "forkjoin.trace";
-        if (args.length >= 1) {
-            filename = args[0];
+    public static void main(String[] args) throws IOException {
+        PrintStream out = System.out;
+
+        out.println("Instrumented ForkJoinPool: trace renderer");
+        out.println("  This is a free software, and it comes with ABSOLUTELY NO WARRANTY.");
+        out.println("  This software includes the complete implementation of ForkJoinPool by Doug Lea and other JSR166 EG members.");
+        out.println("  Bug reports, RFEs, suggestions, and success stories are welcome at https://github.com/shipilev/fjp-trace/");
+        out.println();
+
+        Options opts = new Options(args);
+
+        if (!opts.parse()) {
+            System.exit(1);
         }
 
         ForkJoinPool pool = new ForkJoinPool();
-        pool.invoke(new MainTask(filename));
+        pool.invoke(new MainTask(opts));
     }
 
     private static class MainTask extends RecursiveAction {
 
-        private final String filename;
+        private final Options opts;
 
-        public MainTask(String filename) {
-            this.filename = filename;
+        public MainTask(Options opts) {
+            this.opts = opts;
         }
 
         @Override
         protected void compute() {
-            Events events = new ReadTask(filename).invoke();
+            Events events = new ReadTask(opts).invoke();
 
             WorkerStatusTask wStatus = new WorkerStatusTask(events);
             wStatus.fork();
@@ -73,12 +83,12 @@ public class Main {
             new CheckEventsTask(events).invoke();
 
             ForkJoinTask.invokeAll(
-                    new TaskSubgraphRenderTask(events, tsStatus.join()),
-                    new QueueGraphTask(events, wqStatus.join()),
-                    new TraceGraphTask(events, wStatus.join()),
-                    new DumpEventStreamTask(events),
-                    new TraceTextTask(events, wStatus.join()),
-                    new TaskStatsRenderTask(events, tStatus.join())
+                    new TaskSubgraphRenderTask(opts, events, tsStatus.join()),
+                    new QueueGraphTask(opts, events, wqStatus.join()),
+                    new TraceGraphTask(opts, events, wStatus.join()),
+                    new DumpEventStreamTask(opts, events),
+                    new TraceTextTask(opts, events, wStatus.join()),
+                    new TaskStatsRenderTask(opts, events, tStatus.join())
             );
         }
     }

@@ -1,6 +1,7 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.QueueStatus;
 
 import java.awt.*;
@@ -8,12 +9,10 @@ import java.util.SortedSet;
 
 public class QueueGraphTask extends AbstractGraphTask {
 
-    private static final String TRACE_GRAPH = System.getProperty("queue.graph", "queue-graph.png");
-
     private final QueueStatus queueStatus;
 
-    public QueueGraphTask(Events events, QueueStatus queueStatus) {
-        super(events, "Rendering queue stats", TRACE_GRAPH);
+    public QueueGraphTask(Options opts, Events events, QueueStatus queueStatus) {
+        super(opts, events, "Queue stats", opts.getTargetPrefix() + "-workerQueue.png");
         this.queueStatus = queueStatus;
     }
 

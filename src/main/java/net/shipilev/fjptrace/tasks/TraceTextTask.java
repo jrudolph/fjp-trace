@@ -2,6 +2,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusHolder;
@@ -14,14 +15,15 @@ import java.util.zip.GZIPOutputStream;
 
 public class TraceTextTask extends LoggedRecursiveAction {
 
-    private static final String TRACE_TEXT = System.getProperty("trace.text", "trace.log.gz");
     private static final Integer TRACE_TEXT_LIMIT = Integer.getInteger("trace.text.limit", 100_000);
 
     private final Events events;
     private final WorkerStatus workerStatus;
+    private final String filename;
 
-    public TraceTextTask(Events events, WorkerStatus workerStatus) {
-        super("Printing task trace to " + TRACE_TEXT);
+    public TraceTextTask(Options opts, Events events, WorkerStatus workerStatus) {
+        super("Task trace");
+        this.filename = opts.getTargetPrefix() + "-trace.txt.gz";
         this.events = events;
         this.workerStatus = workerStatus;
     }
@@ -39,7 +41,7 @@ public class TraceTextTask extends LoggedRecursiveAction {
             linesToProcess = list.size();
         }
 
-        PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(TRACE_TEXT)));
+        PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(filename)));
 
         pw.format("%10s", "Time, ms");
         for (long w : events.getWorkers()) {

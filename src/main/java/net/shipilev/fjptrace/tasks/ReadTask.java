@@ -3,6 +3,7 @@ package net.shipilev.fjptrace.tasks;
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.EventType;
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import sun.misc.Unsafe;
 
 import java.io.BufferedInputStream;
@@ -12,9 +13,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 public class ReadTask extends LoggedRecursiveTask<Events> {
-
-    private static final int OFFSET = Integer.getInteger("offset", 0);
-    private static final int LIMIT = Integer.getInteger("limit", Integer.MAX_VALUE);
 
     private static final Unsafe U;
     private static final long BBASE;
@@ -32,12 +30,15 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
 
     }
 
-
     private final String filename;
+    private final int offset;
+    private final int limit;
 
-    public ReadTask(String filename) {
+    public ReadTask(Options opts) {
         super("Reading trace file");
-        this.filename = filename;
+        this.filename = opts.getSource();
+        this.offset = opts.getSourceOffset();
+        this.limit = opts.getSourceLimit();
     }
 
     @Override
@@ -116,7 +117,7 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
          */
         reportProgress(0.50);
 
-        Events events = new Events(Math.min(LIMIT, count));
+        Events events = new Events(Math.min(limit, count));
         InputStream is2 = new BufferedInputStream(new FileInputStream(filename));
 
         int aCount = 0;
@@ -133,9 +134,9 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
             // count workers anyway
             events.addworker(threadID);
 
-            if (0 <= index - OFFSET && index - OFFSET < LIMIT) {
+            if (0 <= index - offset && index - offset < limit) {
                 Event event = new Event(time, EventType.values()[eventOrd], threadID, taskHC);
-                events.set(index - OFFSET, event);
+                events.set(index - offset, event);
             }
 
             aCount++;

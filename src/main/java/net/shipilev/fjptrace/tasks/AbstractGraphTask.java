@@ -1,6 +1,7 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.util.Multiset;
 
 import javax.imageio.ImageIO;
@@ -18,9 +19,6 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractGraphTask extends LoggedRecursiveAction {
-    private static final int HEIGHT = Integer.getInteger("height", 2000);
-    private static final int WIDTH = Integer.getInteger("width", 1000);
-
     private static final Comparator<Color> COLOR_COMPARATOR = new Comparator<Color>() {
         @Override
         public int compare(Color o1, Color o2) {
@@ -29,18 +27,29 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
     };
 
     private final String outFile;
-    private final Events events;
-    private static final int H_HEIGHT = (int) (200);
-    private static final int D_HEIGHT = (int) (HEIGHT - H_HEIGHT);
-    protected static final int T_WIDTH = (int) (WIDTH * 0.1);
-    protected static final int W_WIDTH = (int) (WIDTH * 0.65);
-    private static final int P_WIDTH = (int) (WIDTH * 0.05);
-    private static final int D_WIDTH = (int) (WIDTH * 0.2);
 
-    public AbstractGraphTask(Events events, String name, String outFile) {
+    private final Events events;
+    protected final int HEIGHT;
+    protected final int WIDTH;
+    protected final int H_HEIGHT;
+    protected final int D_HEIGHT;
+    protected final int T_WIDTH;
+    protected final int W_WIDTH;
+    protected final int P_WIDTH;
+    protected final int D_WIDTH;
+
+    public AbstractGraphTask(Options opts, Events events, String name, String outFile) {
         super(name);
         this.outFile = outFile;
         this.events = events;
+        this.HEIGHT = opts.getHeight();
+        this.WIDTH = opts.getWidth();
+        this.H_HEIGHT = 200;
+        this.D_HEIGHT = (HEIGHT - H_HEIGHT);
+        this.T_WIDTH = (int) (WIDTH * 0.1);
+        this.W_WIDTH = (int) (WIDTH * 0.65);
+        this.P_WIDTH = (int) (WIDTH * 0.05);
+        this.D_WIDTH = (int) (WIDTH * 0.2);
     }
 
     protected abstract Color getColor(long tick, long worker);

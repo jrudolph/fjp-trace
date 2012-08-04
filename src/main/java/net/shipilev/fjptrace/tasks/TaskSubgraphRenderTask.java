@@ -1,9 +1,9 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.TaskSubgraphs;
-import net.shipilev.fjptrace.WorkerStatusHolder;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -15,8 +15,8 @@ public class TaskSubgraphRenderTask extends AbstractGraphTask {
     private final TaskSubgraphs data;
     private final Map<Integer, Color> colors;
 
-    public TaskSubgraphRenderTask(Events events, TaskSubgraphs data) {
-        super(events, "Task subgraphs", "subgraphs.png");
+    public TaskSubgraphRenderTask(Options opts, Events events, TaskSubgraphs data) {
+        super(opts, events, "Task subgraphs", opts.getTargetPrefix() + "-subgraphs.png");
         this.data = data;
 
         this.colors = new HashMap<>();

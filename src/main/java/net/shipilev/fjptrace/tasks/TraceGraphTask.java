@@ -1,6 +1,7 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusBL;
@@ -15,12 +16,10 @@ import java.util.SortedSet;
 
 public class TraceGraphTask extends AbstractGraphTask {
 
-    private static final String TRACE_GRAPH = System.getProperty("trace.graph", "trace.png");
-
     private final WorkerStatus workerStatus;
 
-    public TraceGraphTask(Events events, WorkerStatus workerStatus) {
-        super(events, "Rendering graph", TRACE_GRAPH);
+    public TraceGraphTask(Options opts, Events events, WorkerStatus workerStatus) {
+        super(opts, events, "Task graph", opts.getTargetPrefix() + "-trace.png");
         this.workerStatus = workerStatus;
     }
 

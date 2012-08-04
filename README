@@ -27,13 +27,7 @@ QUICK START:
    via -Djava.util.concurrent.ForkJoinPool.traceLog=#
 
  4. Parse the trace:
-   $ java -jar fjp-trace <trace file>
+   $ java -jar fjp-trace.jar -s <trace file>
 
-   You can also use:
-     -Dwidth=#, -Dheight=# to override image size
-     -Dtrace.text to override text file name
-     -Dtrace.graph to override graph file name
-     -Doffset=N to skip N records
-     -Dlimit=M to process only M records
-
-
+ You can also use some of the advanced options, see the help:
+   $ java -jar fjp-trace.jar -h

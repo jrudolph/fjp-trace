@@ -1,6 +1,7 @@
 package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.TaskStatus;
 import net.shipilev.fjptrace.util.PairedList;
 import org.jfree.chart.ChartFactory;
@@ -28,12 +29,16 @@ import java.util.concurrent.TimeUnit;
 
 public class TaskStatsRenderTask extends RecursiveAction {
 
-    private static final int HEIGHT = Integer.getInteger("height", 2000);
-    private static final int WIDTH = Integer.getInteger("width", 1000);
     private final Events events;
     private final TaskStatus taskStatus;
+    private final int width;
+    private final int height;
+    private final String prefix;
 
-    public TaskStatsRenderTask(Events events, TaskStatus taskStatus) {
+    public TaskStatsRenderTask(Options opts, Events events, TaskStatus taskStatus) {
+        this.width = opts.getWidth();
+        this.height = opts.getHeight();
+        this.prefix = opts.getTargetPrefix();
         this.events = events;
         this.taskStatus = taskStatus;
     }
@@ -41,12 +46,12 @@ public class TaskStatsRenderTask extends RecursiveAction {
     @Override
     protected void compute() {
         ForkJoinTask.invokeAll(
-                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), "exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec"),
-                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), "exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec")
+                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec"),
+                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec")
         );
     }
 
-    public static class TaskStatsGraphTask extends LoggedRecursiveAction {
+    public class TaskStatsGraphTask extends LoggedRecursiveAction {
 
         private final Events events;
         private final PairedList data;
@@ -55,7 +60,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
         private final String yLabel;
 
         private TaskStatsGraphTask(Events events, PairedList data, String filename, String chartLabel, String yLabel) {
-            super("Task statistics render \"" + chartLabel + "\" to " + filename);
+            super("Task statistics render \"" + chartLabel + "\"");
             this.events = events;
             this.data = data;
             this.filename = filename;
@@ -131,7 +136,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
                 min = Math.min(min, l);
                 max = Math.max(max, l);
             }
-            histDataSet.addSeries("H1", Arrays.copyOf(values, c), WIDTH);
+            histDataSet.addSeries("H1", Arrays.copyOf(values, c), width);
 
             final JFreeChart histChart = ChartFactory.createHistogram(
                     chartLabel,
@@ -150,11 +155,11 @@ public class TaskStatsRenderTask extends RecursiveAction {
             histPlot.setBackgroundPaint(Color.black);
             histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
 
-            BufferedImage bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
+            BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
             Graphics2D graphics = bi.createGraphics();
 
-            histChart.draw(graphics, new Rectangle(0, 0, WIDTH, 200));
-            chart.draw(graphics, new Rectangle(0, 200, WIDTH, HEIGHT - 200));
+            histChart.draw(graphics, new Rectangle(0, 0, width, 200));
+            chart.draw(graphics, new Rectangle(0, 200, width, height - 200));
 
             try {
                 FileOutputStream out = new FileOutputStream(filename);

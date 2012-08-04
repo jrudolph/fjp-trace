@@ -3,7 +3,6 @@ package net.shipilev.fjptrace.tasks;
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.QueueStatus;
-import net.shipilev.fjptrace.util.Multimap;
 import net.shipilev.fjptrace.util.Multiset;
 
 import java.util.HashMap;
