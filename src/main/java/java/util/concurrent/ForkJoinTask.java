@@ -337,6 +337,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @return status upon completion
      */
     private int doJoin() {
+        registerEvent(EventType.JOIN);
         int s; Thread t; ForkJoinWorkerThread wt; ForkJoinPool.WorkQueue w;
         if ((s = status) >= 0) {
             if (((t = Thread.currentThread()) instanceof ForkJoinWorkerThread)) {
@@ -347,6 +348,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             else
                 s = externalAwaitDone();
         }
+        registerEvent(EventType.JOINED);
         return s;
     }
 
@@ -657,14 +659,9 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      */
     public final V join() {
         int s;
-        registerEvent(EventType.JOIN);
-        try {
-            if ((s = doJoin() & DONE_MASK) != NORMAL)
-                reportException(s);
-            return getRawResult();
-        } finally {
-            registerEvent(EventType.JOINED);
-        }
+        if ((s = doJoin() & DONE_MASK) != NORMAL)
+            reportException(s);
+        return getRawResult();
     }
 
     private void registerEvent(EventType event) {
