@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Random;
 import java.util.SortedSet;
 
-public class TaskSubgraphRenderTask extends AbstractGraphTask {
+public class RenderExternalTaskColoringTask extends AbstractGraphTask {
     private final TaskSubgraphs data;
     private final Map<Integer, Color> colors;
 
-    public TaskSubgraphRenderTask(Options opts, Events events, TaskSubgraphs data) {
-        super(opts, events, "Task subgraphs", opts.getTargetPrefix() + "-subgraphs.png");
+    public RenderExternalTaskColoringTask(Options opts, Events events, TaskSubgraphs data) {
+        super(opts, events, "External task coloring", opts.getTargetPrefix() + "-externalColors.png");
         this.data = data;
 
         this.colors = new HashMap<>();

@@ -23,11 +23,11 @@ import net.shipilev.fjptrace.QueueStatus;
 import java.awt.*;
 import java.util.SortedSet;
 
-public class QueueGraphTask extends AbstractGraphTask {
+public class RenderWorkerQueueTask extends AbstractGraphTask {
 
     private final QueueStatus queueStatus;
 
-    public QueueGraphTask(Options opts, Events events, QueueStatus queueStatus) {
+    public RenderWorkerQueueTask(Options opts, Events events, QueueStatus queueStatus) {
         super(opts, events, "Queue stats", opts.getTargetPrefix() + "-workerQueue.png");
         this.queueStatus = queueStatus;
     }

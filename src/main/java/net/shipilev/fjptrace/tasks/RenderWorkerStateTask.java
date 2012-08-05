@@ -30,12 +30,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 
-public class TraceGraphTask extends AbstractGraphTask {
+public class RenderWorkerStateTask extends AbstractGraphTask {
 
     private final WorkerStatus workerStatus;
 
-    public TraceGraphTask(Options opts, Events events, WorkerStatus workerStatus) {
-        super(opts, events, "Task graph", opts.getTargetPrefix() + "-trace.png");
+    public RenderWorkerStateTask(Options opts, Events events, WorkerStatus workerStatus) {
+        super(opts, events, "Task graph", opts.getTargetPrefix() + "-workerState.png");
         this.workerStatus = workerStatus;
     }
 

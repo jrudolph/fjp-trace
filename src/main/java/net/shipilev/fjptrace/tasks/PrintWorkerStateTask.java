@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
-public class TraceTextTask extends LoggedRecursiveAction {
+public class PrintWorkerStateTask extends LoggedRecursiveAction {
 
     private static final Integer TRACE_TEXT_LIMIT = Integer.getInteger("trace.text.limit", 100_000);
 
@@ -37,9 +37,9 @@ public class TraceTextTask extends LoggedRecursiveAction {
     private final WorkerStatus workerStatus;
     private final String filename;
 
-    public TraceTextTask(Options opts, Events events, WorkerStatus workerStatus) {
+    public PrintWorkerStateTask(Options opts, Events events, WorkerStatus workerStatus) {
         super("Task trace");
-        this.filename = opts.getTargetPrefix() + "-trace.txt.gz";
+        this.filename = opts.getTargetPrefix() + "-workerState.txt.gz";
         this.events = events;
         this.workerStatus = workerStatus;
     }

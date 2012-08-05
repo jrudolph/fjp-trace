@@ -25,12 +25,12 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
-public class DumpEventStreamTask extends LoggedRecursiveAction {
+public class PrintEventsTask extends LoggedRecursiveAction {
 
     private final Events events;
     private final String filename;
 
-    public DumpEventStreamTask(Options opts, Events events) {
+    public PrintEventsTask(Options opts, Events events) {
         super("Task trace");
         this.filename = opts.getTargetPrefix() + "-events.txt.gz";
         this.events = events;

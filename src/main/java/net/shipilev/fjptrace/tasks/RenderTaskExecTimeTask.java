@@ -43,7 +43,7 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.TimeUnit;
 
-public class TaskStatsRenderTask extends RecursiveAction {
+public class RenderTaskExecTimeTask extends RecursiveAction {
 
     private final Events events;
     private final TaskStatus taskStatus;
@@ -51,7 +51,7 @@ public class TaskStatsRenderTask extends RecursiveAction {
     private final int height;
     private final String prefix;
 
-    public TaskStatsRenderTask(Options opts, Events events, TaskStatus taskStatus) {
+    public RenderTaskExecTimeTask(Options opts, Events events, TaskStatus taskStatus) {
         this.width = opts.getWidth();
         this.height = opts.getHeight();
         this.prefix = opts.getTargetPrefix();
@@ -62,8 +62,8 @@ public class TaskStatsRenderTask extends RecursiveAction {
     @Override
     protected void compute() {
         ForkJoinTask.invokeAll(
-                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectime-exclusive.png", "Task execution time (exclusive)", "Time to execute, usec"),
-                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectime-inclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec")
+                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, usec"),
+                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec")
         );
     }
 

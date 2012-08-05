@@ -17,15 +17,15 @@
 package net.shipilev.fjptrace;
 
 import net.shipilev.fjptrace.tasks.CheckEventsTask;
-import net.shipilev.fjptrace.tasks.DumpEventStreamTask;
-import net.shipilev.fjptrace.tasks.QueueGraphTask;
+import net.shipilev.fjptrace.tasks.PrintEventsTask;
+import net.shipilev.fjptrace.tasks.PrintWorkerStateTask;
+import net.shipilev.fjptrace.tasks.RenderExternalTaskColoringTask;
+import net.shipilev.fjptrace.tasks.RenderTaskExecTimeTask;
+import net.shipilev.fjptrace.tasks.RenderWorkerQueueTask;
 import net.shipilev.fjptrace.tasks.ReadTask;
-import net.shipilev.fjptrace.tasks.TaskStatsRenderTask;
+import net.shipilev.fjptrace.tasks.RenderWorkerStateTask;
 import net.shipilev.fjptrace.tasks.TaskStatusTask;
-import net.shipilev.fjptrace.tasks.TaskSubgraphRenderTask;
 import net.shipilev.fjptrace.tasks.TaskSubgraphTask;
-import net.shipilev.fjptrace.tasks.TraceGraphTask;
-import net.shipilev.fjptrace.tasks.TraceTextTask;
 import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
 import net.shipilev.fjptrace.tasks.WorkerStatusTask;
 
@@ -83,12 +83,12 @@ public class Main {
             new CheckEventsTask(events).invoke();
 
             ForkJoinTask.invokeAll(
-                    new TaskSubgraphRenderTask(opts, events, tsStatus.join()),
-                    new QueueGraphTask(opts, events, wqStatus.join()),
-                    new TraceGraphTask(opts, events, wStatus.join()),
-                    new DumpEventStreamTask(opts, events),
-                    new TraceTextTask(opts, events, wStatus.join()),
-                    new TaskStatsRenderTask(opts, events, tStatus.join())
+                    new RenderExternalTaskColoringTask(opts, events, tsStatus.join()),
+                    new RenderWorkerQueueTask(opts, events, wqStatus.join()),
+                    new RenderWorkerStateTask(opts, events, wStatus.join()),
+                    new PrintEventsTask(opts, events),
+                    new PrintWorkerStateTask(opts, events, wStatus.join()),
+                    new RenderTaskExecTimeTask(opts, events, tStatus.join())
             );
         }
     }
