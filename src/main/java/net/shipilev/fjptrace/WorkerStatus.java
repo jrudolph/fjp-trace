@@ -69,7 +69,7 @@ public class WorkerStatus {
 
     private void ensureWorker(long worker) {
         if (workers.add(worker)) {
-            Timeline<WorkerStatusHolder> tl = new Timeline<WorkerStatusHolder>();
+            Timeline<WorkerStatusHolder> tl = new Timeline<>();
             tl.add(-1, WorkerStatusHolder.DEFAULT);
             timeline.put(worker, tl);
             currentStatus.put(worker, WorkerStatusHolder.DEFAULT);

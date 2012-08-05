@@ -43,7 +43,7 @@ public class CheckEventsTask extends LoggedRecursiveAction {
                 case SUBMIT: {
                     Event prev = submittedTasks.put(e.taskHC, e);
                     if (prev != null) {
-                        System.err.println("WARNING: Submitting the same task twice! This event: " + e + ", other event was " + prev);
+                        getPw().println("WARNING: Submitting the same task twice! This event: " + e + ", other event was " + prev);
                     }
 
                     break;
@@ -51,12 +51,12 @@ public class CheckEventsTask extends LoggedRecursiveAction {
 
                 case FORK: {
                     if (executingTasks.containsKey(e.taskHC)) {
-                        System.err.println("WARNING: Forking already executing task! This event: " + e);
+                        getPw().println("WARNING: Forking already executing task! This event: " + e);
                     }
 
                     Event prev = forkedTasks.put(e.taskHC, e);
                     if (prev != null) {
-                        System.err.println("WARNING: Forking the same task twice! This event: " + e + ", other event was " + prev);
+                        getPw().println("WARNING: Forking the same task twice! This event: " + e + ", other event was " + prev);
                     }
 
                     break;
@@ -65,13 +65,13 @@ public class CheckEventsTask extends LoggedRecursiveAction {
                 case EXEC: {
                     Event prev = executingTasks.put(e.taskHC, e);
                     if (prev != null) {
-                        System.err.println("WARNING: Already executing the task! This event: " + e + ", but executed by " + prev);
+                        getPw().println("WARNING: Already executing the task! This event: " + e + ", but executed by " + prev);
                     }
 
                     Event forkedEvent = forkedTasks.remove(e.taskHC);
                     Event submitEvent = submittedTasks.remove(e.taskHC);
                     if (forkedEvent == null && submitEvent == null) {
-                        System.err.println("WARNING: Executing the task of unknown origin! This event: " + e);
+                        getPw().println("WARNING: Executing the task of unknown origin! This event: " + e);
                     }
 
                     break;
@@ -80,7 +80,7 @@ public class CheckEventsTask extends LoggedRecursiveAction {
                 case EXECUTED: {
                     Event prev = executingTasks.remove(e.taskHC);
                     if (prev == null) {
-                        System.err.println("WARNING: Finishing not yet started task! This event: " + e);
+                        getPw().println("WARNING: Finishing not yet started task! This event: " + e);
                     }
                     break;
                 }

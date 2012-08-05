@@ -17,14 +17,54 @@
 package net.shipilev.fjptrace;
 
 public enum EventType {
+
+    /**
+     * Task is being forked.
+     */
     FORK,
+
+    /**
+     * Task is being joined.
+     */
     JOIN,
+
+    /**
+     * Task has joined.
+     */
     JOINED,
+
+    /**
+     * Task is about to be executed.
+     */
     EXEC,
+
+    /**
+     * Task has executed.
+     */
     EXECUTED,
+
+    /**
+     * Task is about to be invoked.
+     */
     INVOKE,
+
+    /**
+     * Task has been invoked.
+     */
     INVOKED,
+
+    /**
+     * Worker is about to park.
+     */
     PARK,
+
+    /**
+     * Worker had just unparked.
+     */
     UNPARK,
+
+    /**
+     * Task was submitted.
+     */
     SUBMIT,
 }

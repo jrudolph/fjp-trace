@@ -58,7 +58,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner == null) {
-                        System.err.println("WARNING: No owner is recorded for executing task! This event: " + e);
+                        getPw().println("WARNING: No owner is recorded for executing task! This event: " + e);
                         break;
                     }
 
@@ -74,7 +74,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     Long owner = taskToWorker.remove(e.taskHC);
 
                     if (owner != null) {
-                        System.err.println("WARNING: Joined the task without prior record of execution, assume it had executed, fixing up the queue. This event: " + e);
+                        getPw().println("WARNING: Joined the task without prior record of execution, assume it had executed, fixing up the queue. This event: " + e);
                         status.register(e.time, owner, currentCount.add(owner, -1));
                     }
 
@@ -84,7 +84,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 case PARK:
                     if (e.taskHC == 0) {
                         if (currentCount.count(e.workerId) != 0) {
-                            System.err.println("WARNING: parking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
+                            getPw().println("WARNING: parking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);
                             status.markInvalid(e.time, e.workerId);
                         }
@@ -94,7 +94,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 case UNPARK:
                     if (e.taskHC == 0) {
                         if (currentCount.count(e.workerId) != 0) {
-                            System.err.println("WARNING: unparking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
+                            getPw().println("WARNING: unparking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);
                             status.markInvalid(e.time, e.workerId);
                         }

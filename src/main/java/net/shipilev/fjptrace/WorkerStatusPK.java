@@ -34,8 +34,4 @@ public enum WorkerStatusPK {
 
     ;
 
-    static WorkerStatusPK deNull(WorkerStatusPK in) {
-        return (in == null) ? UNKNOWN : in;
-    }
-
 }

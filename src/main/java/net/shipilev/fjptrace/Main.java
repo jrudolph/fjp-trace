@@ -69,18 +69,18 @@ public class Main {
             Events events = new ReadTask(opts).invoke();
 
             WorkerStatusTask wStatus = new WorkerStatusTask(events);
-            wStatus.fork();
-
             TaskStatusTask tStatus = new TaskStatusTask(events);
-            tStatus.fork();
-
             WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
-            wqStatus.fork();
-
             TaskSubgraphTask tsStatus = new TaskSubgraphTask(events);
-            tsStatus.fork();
+            CheckEventsTask checkEvents = new CheckEventsTask(events);
 
-            new CheckEventsTask(events).invoke();
+            ForkJoinTask.invokeAll(
+                    wStatus,
+                    wqStatus,
+                    tsStatus,
+                    tStatus,
+                    checkEvents
+            );
 
             ForkJoinTask.invokeAll(
                     new RenderExternalTaskColoringTask(opts, events, tsStatus.join()),

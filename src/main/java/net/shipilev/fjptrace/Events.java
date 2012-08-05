@@ -30,7 +30,6 @@ import java.util.TreeSet;
 public class Events implements Iterable<Event> {
     private final List<Event> events;
     private final SortedSet<Long> workers = new TreeSet<>();
-    private int count;
     private long start;
     private long end;
 

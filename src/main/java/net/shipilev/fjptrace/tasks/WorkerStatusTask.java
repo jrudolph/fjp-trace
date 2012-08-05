@@ -62,12 +62,12 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                     case PARK:
                         if (e.taskHC == 0) {
                             if (execDepth != 0) {
-                                System.err.println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
+                                getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
                                 workerStatus.markInvalid(e.time, w);
                             }
                             if (jnDepth != 0) {
-                                System.err.println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
+                                getPw().println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
                                 jnDepth = 0;
                                 workerStatus.markInvalid(e.time, w);
                             }
@@ -78,12 +78,12 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                     case UNPARK:
                         if (e.taskHC == 0) {
                             if (execDepth != 0) {
-                                System.err.println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
+                                getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
                                 workerStatus.markInvalid(e.time, w);
                             }
                             if (jnDepth != 0) {
-                                System.err.println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
+                                getPw().println("WARNING: parking idle thread, but analyzer thinks it joins the task, resetting join depth");
                                 jnDepth = 0;
                                 workerStatus.markInvalid(e.time, w);
                             }

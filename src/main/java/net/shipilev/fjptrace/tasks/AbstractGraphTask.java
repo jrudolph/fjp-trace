@@ -117,26 +117,22 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
                 }
             }
 
-            {
-                for (long tick : slice) {
-                    for (long w : events.getWorkers()) {
-                        Color color = getColor(tick, w);
+            for (long tick : slice) {
+                for (long w : events.getWorkers()) {
+                    Color color = getColor(tick, w);
 
-                        Multiset<Color> ms = workerColors.get(w);
-                        if (ms == null) {
-                            ms = new Multiset<>();
-                            workerColors.put(w, ms);
-                        }
-                        ms.add(color);
+                    Multiset<Color> ms = workerColors.get(w);
+                    if (ms == null) {
+                        ms = new Multiset<>();
+                        workerColors.put(w, ms);
                     }
+                    ms.add(color);
                 }
-
             }
 
             // render predominant color
             List<Color> mColors = new ArrayList<>();
             for (long w : workerColors.keySet()) {
-//                mColors.add(averageColor(workerColors.get(w)));
                 mColors.add(workerColors.get(w).getMostFrequent());
             }
 

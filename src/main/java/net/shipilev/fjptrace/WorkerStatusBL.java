@@ -37,8 +37,4 @@ public enum WorkerStatusBL {
 
     ;
 
-    static WorkerStatusBL deNull(WorkerStatusBL in) {
-        return (in == null) ? UNKNOWN : in;
-    }
-
 }
