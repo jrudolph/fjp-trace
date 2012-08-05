@@ -52,7 +52,7 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         workerStatus.add(e.time, w, WorkerStatusBL.RUNNING);
                         break;
 
-                    case EXECED:
+                    case EXECUTED:
                         execDepth--;
                         if (execDepth == 0) {
                             workerStatus.add(e.time, w, WorkerStatusBL.IDLE);

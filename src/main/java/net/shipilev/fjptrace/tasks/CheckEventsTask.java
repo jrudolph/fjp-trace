@@ -77,7 +77,7 @@ public class CheckEventsTask extends LoggedRecursiveAction {
                     break;
                 }
 
-                case EXECED: {
+                case EXECUTED: {
                     Event prev = executingTasks.remove(e.taskHC);
                     if (prev == null) {
                         System.err.println("WARNING: Finishing not yet started task! This event: " + e);

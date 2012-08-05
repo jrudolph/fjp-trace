@@ -21,7 +21,7 @@ public enum EventType {
     JOIN,
     JOINED,
     EXEC,
-    EXECED,
+    EXECUTED,
     INVOKE,
     INVOKED,
     PARK,

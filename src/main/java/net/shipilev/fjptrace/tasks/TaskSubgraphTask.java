@@ -75,7 +75,7 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
 
                     break;
 
-                case EXECED:
+                case EXECUTED:
                     // record worker is free
                     currentExec.remove(e.workerId);
 

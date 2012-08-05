@@ -68,7 +68,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
                     break;
 
-                case EXECED:
+                case EXECUTED:
                     // record worker is free
                     currentExec.remove(e.workerId);
 

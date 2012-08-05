@@ -266,7 +266,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             if (completed)
                 s = setCompletion(NORMAL);
         }
-        registerEvent(EventType.EXECED);
+        registerEvent(EventType.EXECUTED);
         return s;
     }
 
