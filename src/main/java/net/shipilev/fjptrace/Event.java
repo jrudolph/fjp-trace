@@ -91,6 +91,6 @@ public class Event implements Comparable<Event> {
 
     @Override
     public String toString() {
-        return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: " + eventType + "(" + taskHC + ") [w: " + workerId + "]";
+        return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: [w: " + workerId + "] " + eventType + "(" + taskHC + ")";
     }
 }
