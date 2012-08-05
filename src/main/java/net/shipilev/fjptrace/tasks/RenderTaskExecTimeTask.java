@@ -138,21 +138,45 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             plot.setFixedDomainAxisSpace(space);
 
             /**
-             * Render histogram
+             * Render Y histogram
              */
+            final JFreeChart histY = getYHistogram(rangeAxis, space);
 
-            final HistogramDataset histDataSet = new HistogramDataset();
-            double[] values = new double[data.getAllY().length];
+            /**
+             * Render X histogram
+             */
+            final JFreeChart histX = getXHistogram(domainAxis, space);
 
-            int c = 0;
-            long min = Integer.MAX_VALUE;
-            long max = Integer.MIN_VALUE;
-            for (long l : data.getAllY()) {
-                values[c++] = TimeUnit.NANOSECONDS.toMicros(l);
-                min = Math.min(min, l);
-                max = Math.max(max, l);
+            BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = bi.createGraphics();
+
+            int top = 200;
+            int right = 200;
+
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, width, height);
+            histX.draw(graphics, new Rectangle(width - right, top, right, height - top));
+            histY.draw(graphics, new Rectangle(0, 0, width - right, top));
+            chart.draw(graphics, new Rectangle(0, top, width - right, height - top));
+
+            try {
+                FileOutputStream out = new FileOutputStream(filename);
+                ChartUtilities.writeBufferedImageAsPNG(out, bi);
+                out.close();
+            } catch (IOException e) {
+                // do nothing
             }
-            histDataSet.addSeries("H1", Arrays.copyOf(values, c), width);
+        }
+
+        private JFreeChart getYHistogram(ValueAxis rangeAxis, AxisSpace space) {
+            final HistogramDataset histDataSet = new HistogramDataset();
+            long[] d = data.getAllY();
+
+            double[] values = new double[d.length];
+            for (int c = 0; c < d.length; c++) {
+                values[c] = TimeUnit.NANOSECONDS.toMicros(d[c]);
+            }
+            histDataSet.addSeries("H1", values, width);
 
             final JFreeChart histChart = ChartFactory.createHistogram(
                     chartLabel,
@@ -170,20 +194,36 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             histPlot.setFixedRangeAxisSpace(space);
             histPlot.setBackgroundPaint(Color.black);
             histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
+            return histChart;
+        }
 
-            BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = bi.createGraphics();
+        private JFreeChart getXHistogram(ValueAxis axis, AxisSpace space) {
+            final HistogramDataset histDataSet = new HistogramDataset();
+            long[] d = data.getAllX();
 
-            histChart.draw(graphics, new Rectangle(0, 0, width, 200));
-            chart.draw(graphics, new Rectangle(0, 200, width, height - 200));
-
-            try {
-                FileOutputStream out = new FileOutputStream(filename);
-                ChartUtilities.writeBufferedImageAsPNG(out, bi);
-                out.close();
-            } catch (IOException e) {
-                // do nothing
+            double[] values = new double[d.length];
+            for (int c = 0; c < d.length; c++) {
+                values[c] = TimeUnit.NANOSECONDS.toMillis(d[c]);
             }
+            histDataSet.addSeries("H1", values, height);
+
+            final JFreeChart histChart = ChartFactory.createHistogram(
+                    "",
+                    "", "Samples",
+                    histDataSet,
+                    PlotOrientation.HORIZONTAL,
+                    false, false, false
+            );
+
+            histChart.setBackgroundPaint(Color.white);
+            XYPlot histPlot = histChart.getXYPlot();
+
+            axis.setAutoRange(false);
+            histPlot.setDomainAxis(axis);
+//            histPlot.setFixedRangeAxisSpace(space);
+            histPlot.setBackgroundPaint(Color.black);
+            histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
+            return histChart;
         }
 
     }
