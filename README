@@ -5,6 +5,39 @@ This implementation is based on JSR 166 by Doug Lea.
 The baseline version is available either in JDK 7+, or 
 JSR-166 concurrency interest: http://g.oswego.edu/dl/concurrency-interest/
 
+GENERATED DATA (aka FEATURES):
+
+Most of the graphs are showing the progress in time, rather than estimating point metrics.
+It is easy to extend fjp-trace to get the measurable metrics out.
+
+ 1. *-events.txt.gz: raw event stream
+     This is the original event stream, sorted by time, and printed in human-readable form.
+
+ 2. *-workerState.png: worker states
+     This graph should be the most familiar, like the other thread state tracers do. The excess of
+     waits and idle threads can highlight either capacity or decomposition problem.
+
+ 3. *-workerState.txt.gz: worker states (text representation)
+     Text trace might be more useful to track event sequence more accurately. While graph could
+     show you the big picture, text trace can drill down to individual events.
+
+ 4. *-workerQueue.png: worker queue state
+     This graph infers the remaining elements in each worker queue. Note that fjp-trace has no
+     direct measure of queue depth, instead inferring it from the fork-exec event pairs. That
+     probably brings some hysteresis into the picture, and should be considered when making decisions.
+
+ 5. *-exectime*.png: execution time for each subtask
+     Exclusive time is the time spent in the task alone, without counting recursive invocations.
+     Inclusive time accounts the recursive invocations as well, and so it often looks like the
+     "exclusive time" pre-image copied at periodic time shifts.
+
+ 6. *-externalColors.png: aggregate subtasks by their external task origin.
+     This is useful to watch for subtasks interleaves and diagnose fairness problems.
+     Also, the graph is rather psychedelic, and can be used in conjunction with appropriate
+     chemical agents to bring the unforgettable experience.
+
+If there is something else sorely needed, don't hesitate to raise the issue.
+
 QUICK START:
 
  1. Build the distribution
@@ -31,3 +64,5 @@ QUICK START:
 
  You can also use some of the advanced options, see the help:
    $ java -jar fjp-trace.jar -h
+
+
