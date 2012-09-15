@@ -51,7 +51,7 @@ public class RenderWorkerQueueTask extends AbstractGraphTask {
 
         g.drawString("Elements in worker queue: ", T_WIDTH, LEG_STEP);
 
-        long maxDepth = queueStatus.getMaxCount();
+        long maxDepth = Math.max(queueStatus.getMaxCount(), 1);
         int STEP = (int) Math.max(1, W_WIDTH / maxDepth);
         for (int d = 0; d < maxDepth; d++) {
             Color color = new Color(0, 1.0f * d / maxDepth, 0);

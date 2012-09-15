@@ -176,7 +176,9 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             for (int c = 0; c < d.length; c++) {
                 values[c] = TimeUnit.NANOSECONDS.toMicros(d[c]);
             }
-            histDataSet.addSeries("H1", values, width);
+            if (values.length > 0) {
+                histDataSet.addSeries("H1", values, width);
+            }
 
             final JFreeChart histChart = ChartFactory.createHistogram(
                     chartLabel,
@@ -205,7 +207,9 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             for (int c = 0; c < d.length; c++) {
                 values[c] = TimeUnit.NANOSECONDS.toMillis(d[c]);
             }
-            histDataSet.addSeries("H1", values, height);
+            if (values.length > 0) {
+                histDataSet.addSeries("H1", values, height);
+            }
 
             final JFreeChart histChart = ChartFactory.createHistogram(
                     "",
