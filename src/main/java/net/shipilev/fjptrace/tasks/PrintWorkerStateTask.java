@@ -38,7 +38,7 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
     private final String filename;
 
     public PrintWorkerStateTask(Options opts, Events events, WorkerStatus workerStatus) {
-        super("Task trace");
+        super("Worker state trace");
         this.filename = opts.getTargetPrefix() + "-workerState.txt.gz";
         this.events = events;
         this.workerStatus = workerStatus;

@@ -31,7 +31,7 @@ public class PrintEventsTask extends LoggedRecursiveAction {
     private final String filename;
 
     public PrintEventsTask(Options opts, Events events) {
-        super("Task trace");
+        super("Dump events");
         this.filename = opts.getTargetPrefix() + "-events.txt.gz";
         this.events = events;
     }
