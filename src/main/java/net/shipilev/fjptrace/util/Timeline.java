@@ -26,6 +26,8 @@ public class Timeline<T> {
 
     private volatile boolean isSorted;
 
+    private int lastFound;
+
     public void add(long time, T status) {
         ticks.add(new Tick<>(time, status));
         isSorted = false;
@@ -39,9 +41,10 @@ public class Timeline<T> {
             isSorted = true;
         }
 
-        int i = binarySearch(ticks, new Tick<T>(time, null));
+        int i = binarySearch(ticks, new Tick<T>(time, null), lastFound);
         if (i >= 0) {
-            return ticks.get(i).status;
+            lastFound = i;
+            return ticks.get(lastFound).status;
         }
 
         int insertionPoint = -i - 1;
@@ -56,14 +59,23 @@ public class Timeline<T> {
             return null;
         }
 
-        return ticks.get(insertionPoint - 1).status;
+        lastFound = insertionPoint - 1;
+        return ticks.get(lastFound).status;
     }
 
-    public <T extends Comparable<T>> int binarySearch(List<T> list, T key) {
-        return binarySearch(list, 0, list.size(), key);
+    public <T extends Comparable<T>> int binarySearch(List<T> list, T key, int guess) {
+        return binarySearch(list, 0, list.size(), key, guess);
     }
 
-    public <T extends Comparable<T>> int binarySearch(List<T> list, int from, int to, T key) {
+    public <T extends Comparable<T>> int binarySearch(List<T> list, int from, int to, T key, int guess) {
+        if (key.compareTo(list.get(guess)) == 0) {
+            return guess;
+        }
+
+        if ((guess + 1 < to) && key.compareTo(list.get(guess + 1)) < 0 && key.compareTo(list.get(guess)) > 0 ) {
+            return guess;
+        }
+
         int low = from;
         int high = to - 1;
 
