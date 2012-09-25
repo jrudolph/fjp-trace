@@ -22,6 +22,7 @@ import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusHolder;
+import net.shipilev.fjptrace.util.GZIPOutputStreamEx;
 
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
@@ -57,7 +58,7 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
             linesToProcess = list.size();
         }
 
-        PrintWriter pw = new PrintWriter(new GZIPOutputStream(new FileOutputStream(filename)));
+        PrintWriter pw = new PrintWriter(new GZIPOutputStreamEx(new FileOutputStream(filename)));
 
         pw.format("%10s", "Time, ms");
         for (long w : events.getWorkers()) {
