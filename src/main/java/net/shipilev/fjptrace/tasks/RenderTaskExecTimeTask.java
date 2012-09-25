@@ -24,7 +24,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.AxisSpace;
-import org.jfree.chart.axis.LogarithmicAxis;
+import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.axis.StandardTickUnitSource;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
@@ -38,10 +38,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
-import java.util.concurrent.TimeUnit;
 
 public class RenderTaskExecTimeTask extends RecursiveAction {
 
@@ -62,8 +63,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
     @Override
     protected void compute() {
         ForkJoinTask.invokeAll(
-                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, usec"),
-                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, usec")
+                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, sec"),
+                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, sec")
         );
     }
 
@@ -88,10 +89,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
         protected void doWork() {
             XYSeries series = new XYSeries("");
             for (PairedList.Pair entry : data) {
-                long x = TimeUnit.NANOSECONDS.toMillis(entry.getK1());
-                long dur = TimeUnit.NANOSECONDS.toMicros(entry.getK2());
-                if (dur > 0) {
-                    series.add(x, dur, false);
+                if (entry.getK2() > 0) {
+                    series.add(nanosToMillis(entry.getK1()), nanosToSeconds(entry.getK2()), false);
                 }
             }
 
@@ -124,12 +123,22 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             domainAxis.setLowerMargin(0.0);
             domainAxis.setUpperMargin(0.0);
             domainAxis.setInverted(true);
-            domainAxis.setLowerBound(TimeUnit.NANOSECONDS.toMillis(events.getStart()));
-            domainAxis.setUpperBound(TimeUnit.NANOSECONDS.toMillis(events.getEnd()));
+            domainAxis.setLowerBound(nanosToMillis(events.getStart()));
+            domainAxis.setUpperBound(nanosToMillis(events.getEnd()));
 
-            final ValueAxis rangeAxis = new LogarithmicAxis(yLabel);
+            final LogAxis rangeAxis = new LogAxis(yLabel);
             rangeAxis.setTickMarkPaint(Color.white);
             rangeAxis.setStandardTickUnits(new StandardTickUnitSource());
+            rangeAxis.setMinorTickCount(10);
+            rangeAxis.setMinorTickMarksVisible(true);
+            rangeAxis.setBase(10);
+
+            final DecimalFormatSymbols newSymbols = new DecimalFormatSymbols(Locale.GERMAN);
+            newSymbols.setExponentSeparator("E");
+            final DecimalFormat decForm = new DecimalFormat("0.##E0#");
+            decForm.setDecimalFormatSymbols(newSymbols);
+            rangeAxis.setNumberFormatOverride(decForm);
+
             plot.setRangeAxis(rangeAxis);
 
             AxisSpace space = new AxisSpace();
@@ -174,7 +183,7 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             double[] values = new double[d.length];
             for (int c = 0; c < d.length; c++) {
-                values[c] = TimeUnit.NANOSECONDS.toMicros(d[c]);
+                values[c] = nanosToSeconds(d[c]);
             }
             if (values.length > 0) {
                 histDataSet.addSeries("H1", values, width);
@@ -190,7 +199,6 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             histChart.setBackgroundPaint(Color.white);
             XYPlot histPlot = histChart.getXYPlot();
-
             rangeAxis.setAutoRange(false);
             histPlot.setDomainAxis(rangeAxis);
             histPlot.setFixedRangeAxisSpace(space);
@@ -205,7 +213,7 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             double[] values = new double[d.length];
             for (int c = 0; c < d.length; c++) {
-                values[c] = TimeUnit.NANOSECONDS.toMillis(d[c]);
+                values[c] = nanosToMillis(d[c]);
             }
             if (values.length > 0) {
                 histDataSet.addSeries("H1", values, height);
@@ -224,11 +232,19 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             axis.setAutoRange(false);
             histPlot.setDomainAxis(axis);
-//            histPlot.setFixedRangeAxisSpace(space);
             histPlot.setBackgroundPaint(Color.black);
             histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
             return histChart;
         }
 
     }
+
+    public static double nanosToMillis(long nanos) {
+        return nanos * 1.0 / (1_000_000);
+    }
+
+    public static double nanosToSeconds(long nanos) {
+        return nanos * 1.0 / (1_000_000_000);
+    }
+
 }
