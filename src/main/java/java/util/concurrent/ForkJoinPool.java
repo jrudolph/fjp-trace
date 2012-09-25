@@ -1057,8 +1057,8 @@ public class ForkJoinPool extends AbstractExecutorService {
          * Flushes the tracing buffer
          */
         final void flush() {
-            synchronized (pool.traceWriter) {
-                if (traceEventPos > 0) {
+            if (traceEventPos > 0) {
+                synchronized (pool.traceWriter) {
                     try {
                         pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
                     } catch (IOException e) {
