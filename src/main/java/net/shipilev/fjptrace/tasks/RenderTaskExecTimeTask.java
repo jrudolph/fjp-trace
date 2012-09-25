@@ -63,8 +63,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
     @Override
     protected void compute() {
         ForkJoinTask.invokeAll(
-                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, sec"),
-                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, sec")
+                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, sec, LOG scale"),
+                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, sec, LOG scale")
         );
     }
 
@@ -90,7 +90,7 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             XYSeries series = new XYSeries("");
             for (PairedList.Pair entry : data) {
                 if (entry.getK2() > 0) {
-                    series.add(nanosToMillis(entry.getK1()), nanosToSeconds(entry.getK2()), false);
+                    series.add(nanosToSeconds(entry.getK1()), nanosToSeconds(entry.getK2()), false);
                 }
             }
 
@@ -99,7 +99,7 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             final JFreeChart chart = ChartFactory.createXYLineChart(
                     "",
-                    "Run time, msec", yLabel,
+                    "Run time, sec", yLabel,
                     dataset,
                     PlotOrientation.HORIZONTAL,
                     false, false, false
@@ -123,8 +123,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             domainAxis.setLowerMargin(0.0);
             domainAxis.setUpperMargin(0.0);
             domainAxis.setInverted(true);
-            domainAxis.setLowerBound(nanosToMillis(events.getStart()));
-            domainAxis.setUpperBound(nanosToMillis(events.getEnd()));
+            domainAxis.setLowerBound(nanosToSeconds(events.getStart()));
+            domainAxis.setUpperBound(nanosToSeconds(events.getEnd()));
 
             final LogAxis rangeAxis = new LogAxis(yLabel);
             rangeAxis.setTickMarkPaint(Color.white);
@@ -213,7 +213,7 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             double[] values = new double[d.length];
             for (int c = 0; c < d.length; c++) {
-                values[c] = nanosToMillis(d[c]);
+                values[c] = nanosToSeconds(d[c]);
             }
             if (values.length > 0) {
                 histDataSet.addSeries("H1", values, height);
