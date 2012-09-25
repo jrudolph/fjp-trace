@@ -1049,7 +1049,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
             U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
             U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10,
-                    (task == null) ? 0 : task.traceTag);
+                    (task == null) ? TagGenerator.NULL_TASK_ID : task.traceTag);
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
             traceEventPos += CHUNK_SIZE;
         }

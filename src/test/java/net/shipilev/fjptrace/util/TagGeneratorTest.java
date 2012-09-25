@@ -29,6 +29,14 @@ public class TagGeneratorTest {
     }
 
     @Test
+    public void testWrap() {
+        TagGenerator generator = new TagGenerator(100_000_000);
+        for (int c = 0; c < Integer.MAX_VALUE - 1; c++) {
+            Assert.assertTrue("value is not positive", generator.next() > 0);
+        }
+    }
+
+    @Test
     public void testPar() throws ExecutionException, InterruptedException {
         final TagGenerator generator = new TagGenerator(1);
 
