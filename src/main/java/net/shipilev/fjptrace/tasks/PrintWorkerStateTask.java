@@ -78,7 +78,7 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
 
             for (long w : events.getWorkers()) {
                 if (w == e.workerId) {
-                    pw.format("%20s", e.eventType + "(" + e.taskHC + ")");
+                    pw.format("%20s", e.eventType + "(" + e.taskTag + ")");
                 } else {
                     WorkerStatusHolder status = workerStatus.getStatus(w, e.time);
                     pw.print(Selectors.selectText(status.blStatus, status.pkStatus, status.jnStatus));

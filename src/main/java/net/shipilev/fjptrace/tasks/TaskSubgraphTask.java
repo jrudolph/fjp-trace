@@ -46,32 +46,32 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT:
-                    taskToID.put(e.taskHC, externalTaskID++);
+                    taskToID.put(e.taskTag, externalTaskID++);
                     break;
 
                 case FORK: {
                     Integer currentTask = currentExec.get(e.workerId);
-                    taskToID.put(e.taskHC, taskToID.get(currentTask));
+                    taskToID.put(e.taskTag, taskToID.get(currentTask));
                     break;
                 }
 
                 case EXEC:
                     Integer currentTask = currentExec.get(e.workerId);
                     if (currentTask != null) {
-                        parentTasks.put(e.taskHC, currentTask);
+                        parentTasks.put(e.taskTag, currentTask);
                     }
 
                     Integer id = taskToID.get(currentTask);
                     if (id != null) {
-                        taskToID.put(e.taskHC, id);
+                        taskToID.put(e.taskTag, id);
                     }
 
-                    Integer thisTaskId = taskToID.get(e.taskHC);
+                    Integer thisTaskId = taskToID.get(e.taskTag);
                     if (thisTaskId != null) {
                         subgraphs.register(e.time, e.workerId, thisTaskId);
                     }
 
-                    currentExec.put(e.workerId, e.taskHC);
+                    currentExec.put(e.workerId, e.taskTag);
 
                     break;
 
@@ -79,7 +79,7 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
                     // record worker is free
                     currentExec.remove(e.workerId);
 
-                    Integer parent = parentTasks.remove(e.taskHC);
+                    Integer parent = parentTasks.remove(e.taskTag);
                     if (parent != null) {
                         // getting back to parent
                         currentExec.put(e.workerId, parent);

@@ -60,7 +60,7 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         break;
 
                     case PARK:
-                        if (e.taskHC == 0) {
+                        if (e.taskTag <= 0) {
                             if (execDepth != 0) {
                                 getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
@@ -76,7 +76,7 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         break;
 
                     case UNPARK:
-                        if (e.taskHC == 0) {
+                        if (e.taskTag <= 0) {
                             if (execDepth != 0) {
                                 getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;

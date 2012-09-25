@@ -52,7 +52,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
                     if (currentTask != null) {
                         // about to leave parent
-                        parentTasks.put(e.taskHC, currentTask);
+                        parentTasks.put(e.taskTag, currentTask);
 
                         Long start = lastSelfTime.remove(currentTask);
                         if (start == null) {
@@ -62,9 +62,9 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     }
 
                     // start executing
-                    lastSelfTime.put(e.taskHC, e.time);
-                    currentExec.put(e.workerId, e.taskHC);
-                    execTime.put(e.taskHC, e.time);
+                    lastSelfTime.put(e.taskTag, e.time);
+                    currentExec.put(e.workerId, e.taskTag);
+                    execTime.put(e.taskTag, e.time);
 
                     break;
 
@@ -73,22 +73,22 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     currentExec.remove(e.workerId);
 
                     // count remaining self time
-                    Long s = lastSelfTime.remove(e.taskHC);
+                    Long s = lastSelfTime.remove(e.taskTag);
                     if (s == null) {
                         continue;
                     }
-                    timings.add(e.taskHC, e.time - s);
-                    taskStatus.addSelf((e.time - timings.count(e.taskHC) / 2), timings.count(e.taskHC));
-                    timings.removeKey(e.taskHC);
+                    timings.add(e.taskTag, e.time - s);
+                    taskStatus.addSelf((e.time - timings.count(e.taskTag) / 2), timings.count(e.taskTag));
+                    timings.removeKey(e.taskTag);
 
                     // count the time
-                    Long s1 = execTime.remove(e.taskHC);
+                    Long s1 = execTime.remove(e.taskTag);
                     if (s1 == null) {
                         continue;
                     }
                     taskStatus.addTotal((e.time + s1) / 2, e.time - s1);
 
-                    Integer parent = parentTasks.remove(e.taskHC);
+                    Integer parent = parentTasks.remove(e.taskTag);
                     if (parent != null) {
                         // getting back to parent
                         lastSelfTime.put(parent, e.time);

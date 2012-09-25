@@ -46,16 +46,16 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT:
-                    taskToWorker.put(e.taskHC, SUBMISSION_WORKER);
+                    taskToWorker.put(e.taskTag, SUBMISSION_WORKER);
                     break;
 
                 case FORK:
                     status.register(e.time, e.workerId, currentCount.add(e.workerId));
-                    taskToWorker.put(e.taskHC, e.workerId);
+                    taskToWorker.put(e.taskTag, e.workerId);
                     break;
 
                 case EXEC: {
-                    Long owner = taskToWorker.remove(e.taskHC);
+                    Long owner = taskToWorker.remove(e.taskTag);
 
                     if (owner == null) {
                         getPw().println("WARNING: No owner is recorded for executing task! This event: " + e);
@@ -71,7 +71,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 }
 
                 case JOINED: {
-                    Long owner = taskToWorker.remove(e.taskHC);
+                    Long owner = taskToWorker.remove(e.taskTag);
 
                     if (owner != null) {
                         getPw().println("WARNING: Joined the task without prior record of execution, assume it had executed, fixing up the queue. This event: " + e);
@@ -82,7 +82,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 }
 
                 case PARK:
-                    if (e.taskHC == 0) {
+                    if (e.taskTag <= 0) {
                         if (currentCount.count(e.workerId) != 0) {
                             getPw().println("WARNING: parking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);
@@ -92,7 +92,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     break;
 
                 case UNPARK:
-                    if (e.taskHC == 0) {
+                    if (e.taskTag <= 0) {
                         if (currentCount.count(e.workerId) != 0) {
                             getPw().println("WARNING: unparking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);
