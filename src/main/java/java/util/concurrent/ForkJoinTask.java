@@ -7,6 +7,7 @@
 package java.util.concurrent;
 
 import net.shipilev.fjptrace.EventType;
+import net.shipilev.fjptrace.TagGenerator;
 
 import java.io.Serializable;
 import java.lang.ref.ReferenceQueue;
@@ -224,8 +225,14 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
     static final int SIGNAL      = 0x00010000;  // must be >= 1 << 16
     static final int SMASK       = 0x0000ffff;  // short bits for tags
 
+    /** fjp-trace task tag */
+    final int traceTag;
+
     protected ForkJoinTask() {
-        status = (ThreadLocalRandom.current().nextInt() & SMASK);
+        Thread t = Thread.currentThread();
+        TagGenerator gen = ((t instanceof ForkJoinWorkerThread) ?
+                        ((ForkJoinWorkerThread) t).pool.tagGenerator: null);
+        traceTag = (gen == null) ? 0 : gen.next();
     }
 
     /**
@@ -1360,8 +1367,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final short getForkJoinTaskTag() {
-        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
-//        return (short)status;
+        return (short)status;
     }
 
     /**
@@ -1372,12 +1378,11 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final short setForkJoinTaskTag(short tag) {
-        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
-//        for (int s;;) {
-//            if (U.compareAndSwapInt(this, STATUS, s = status,
-//                                    (s & ~SMASK) | (tag & SMASK)))
-//                return (short)s;
-//        }
+        for (int s;;) {
+            if (U.compareAndSwapInt(this, STATUS, s = status,
+                                    (s & ~SMASK) | (tag & SMASK)))
+                return (short)s;
+        }
     }
 
     /**
@@ -1395,14 +1400,13 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
      * @since 1.8
      */
     public final boolean compareAndSetForkJoinTaskTag(short e, short tag) {
-        throw new UnsupportedOperationException("Tag is used for special purposes in tracing FJP version");
-//        for (int s;;) {
-//            if ((short)(s = status) != e)
-//                return false;
-//            if (U.compareAndSwapInt(this, STATUS, s,
-//                                    (s & ~SMASK) | (tag & SMASK)))
-//                return true;
-//        }
+        for (int s;;) {
+            if ((short)(s = status) != e)
+                return false;
+            if (U.compareAndSwapInt(this, STATUS, s,
+                                    (s & ~SMASK) | (tag & SMASK)))
+                return true;
+        }
     }
 
     /**

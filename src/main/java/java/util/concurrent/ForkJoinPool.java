@@ -7,6 +7,7 @@
 package java.util.concurrent;
 
 import net.shipilev.fjptrace.EventType;
+import net.shipilev.fjptrace.TagGenerator;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1048,7 +1049,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
             U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
             U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10,
-                    (task == null) ? 0 : System.identityHashCode(task) ^ (short)task.status);
+                    (task == null) ? 0 : task.traceTag);
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
             traceEventPos += CHUNK_SIZE;
         }
@@ -1324,7 +1325,8 @@ public class ForkJoinPool extends AbstractExecutorService {
     final AtomicLong stealCount;               // collect counts when terminated
     final AtomicInteger nextWorkerNumber;      // to create worker name string
     final String workerNamePrefix;             // to create worker name string
-    final OutputStream traceWriter;             // trace writer
+    final OutputStream traceWriter;            // trace writer
+    final TagGenerator tagGenerator;           // trace tag generator
 
     //  Creating, registering, and deregistering workers
 
@@ -2252,12 +2254,14 @@ public class ForkJoinPool extends AbstractExecutorService {
         if (TRACE) {
             try {
                 traceWriter = new FileOutputStream(TRACE_LOG);
+                tagGenerator = new TagGenerator();
             } catch (IOException e) {
                 // FIXME: Should not throw exception here?
                 throw new IllegalStateException(e);
             }
         } else {
             traceWriter = null;
+            tagGenerator = null;
         }
     }
 
