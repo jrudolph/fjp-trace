@@ -68,28 +68,51 @@ public class Main {
         protected void compute() {
             Events events = new ReadTask(opts).invoke();
 
-            WorkerStatusTask wStatus = new WorkerStatusTask(events);
-            TaskStatusTask tStatus = new TaskStatusTask(events);
-            WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
-            TaskSubgraphTask tsStatus = new TaskSubgraphTask(events);
+            /*
+               We are doing the tasks per stride, because we try to minimize heap impact.
+               This also explains silly nulls assigned for the tasks afterwards.
+             */
+
             CheckEventsTask checkEvents = new CheckEventsTask(events);
+            PrintEventsTask printEventsTask = new PrintEventsTask(opts, events);
+            checkEvents.fork();
+            printEventsTask.fork();
 
-            ForkJoinTask.invokeAll(
-                    wStatus,
-                    wqStatus,
-                    tsStatus,
-                    tStatus,
-                    checkEvents
-            );
+            {
+                TaskStatusTask tStatus = new TaskStatusTask(events);
+                TaskSubgraphTask tsStatus = new TaskSubgraphTask(events);
+                tStatus.fork();
+                tsStatus.fork();
+                ForkJoinTask.invokeAll(
+                        new RenderExternalTaskColoringTask(opts, events, tsStatus.join()),
+                        new RenderTaskExecTimeTask(opts, events, tStatus.join())
+                        );
+                tStatus = null;
+                tsStatus = null;
+            }
 
-            ForkJoinTask.invokeAll(
-                    new RenderExternalTaskColoringTask(opts, events, tsStatus.join()),
-                    new RenderWorkerQueueTask(opts, events, wqStatus.join()),
-                    new RenderWorkerStateTask(opts, events, wStatus.join()),
-                    new PrintEventsTask(opts, events),
-                    new PrintWorkerStateTask(opts, events, wStatus.join()),
-                    new RenderTaskExecTimeTask(opts, events, tStatus.join())
-            );
+            {
+                WorkerStatusTask wStatus = new WorkerStatusTask(events);
+                wStatus.fork();
+                ForkJoinTask.invokeAll(
+                        new RenderWorkerStateTask(opts, events, wStatus.join()),
+                        new PrintWorkerStateTask(opts, events, wStatus.join())
+                        );
+                wStatus = null;
+            }
+
+            {
+                WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
+                wqStatus.fork();
+                ForkJoinTask.invokeAll(
+                        new RenderWorkerQueueTask(opts, events, wqStatus.join())
+                        );
+                wqStatus = null;
+            }
+
+            checkEvents.join();
+            printEventsTask.join();
+
         }
     }
 
