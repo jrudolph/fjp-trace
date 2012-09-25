@@ -22,24 +22,24 @@ import java.util.List;
 
 public class Timeline<T> {
 
-    private List<Tick> ticks = new ArrayList<>();
+    private List<Tick<T>> ticks = new ArrayList<>();
 
     private volatile boolean isSorted;
 
     public void add(long time, T status) {
-        ticks.add(new Tick(time, status));
+        ticks.add(new Tick<>(time, status));
         isSorted = false;
     }
 
     public T getStatus(long time, boolean makePrediction) {
         if (!isSorted) {
-            List<Tick> newTicks = new ArrayList<>(ticks);
+            List<Tick<T>> newTicks = new ArrayList<>(ticks);
             Collections.sort(newTicks);
             ticks = newTicks;
             isSorted = true;
         }
 
-        int i = Collections.binarySearch(ticks, new Tick(time, null));
+        int i = binarySearch(ticks, new Tick<T>(time, null));
         if (i >= 0) {
             return ticks.get(i).status;
         }
@@ -59,6 +59,30 @@ public class Timeline<T> {
         return ticks.get(insertionPoint - 1).status;
     }
 
+    public <T extends Comparable<T>> int binarySearch(List<T> list, T key) {
+        return binarySearch(list, 0, list.size(), key);
+    }
+
+    public <T extends Comparable<T>> int binarySearch(List<T> list, int from, int to, T key) {
+        int low = from;
+        int high = to - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            T midVal = list.get(mid);
+
+            int c = midVal.compareTo(key);
+            if (c < 0)
+                low = mid + 1;
+            else if (c > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
+    }
+
+
     public T getStatus(long time) {
         return getStatus(time, false);
     }
@@ -66,8 +90,8 @@ public class Timeline<T> {
     public void removeBefore(long time) {
         // FIXME: Crude and inefficient
 
-        List<Tick> newTicks = new ArrayList<>();
-        for (Tick t : ticks) {
+        List<Tick<T>> newTicks = new ArrayList<>();
+        for (Tick<T> t : ticks) {
             if (t.time > time) {
                 newTicks.add(t);
             }
@@ -78,7 +102,7 @@ public class Timeline<T> {
     }
 
 
-    private class Tick implements Comparable<Tick> {
+    private static class Tick<T> implements Comparable<Tick<T>> {
         private final long time;
         private final T status;
 
@@ -88,7 +112,7 @@ public class Timeline<T> {
         }
 
         @Override
-        public int compareTo(Tick o) {
+        public int compareTo(Tick<T> o) {
             return Long.compare(time, o.time);
         }
     }
