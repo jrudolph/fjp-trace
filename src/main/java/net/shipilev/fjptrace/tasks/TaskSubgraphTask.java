@@ -52,6 +52,7 @@ public class TaskSubgraphTask extends LoggedRecursiveTask<TaskSubgraphs> {
 
                 case FORK: {
                     Integer currentTask = currentExec.get(e.workerId);
+                    taskToID.put(e.taskTag, taskToID.get(currentTask));
                     subgraphs.link(currentTask, e.taskTag);
                     break;
                 }
