@@ -20,6 +20,7 @@ import net.shipilev.fjptrace.util.PairedList;
 import net.shipilev.fjptrace.util.Timeline;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,23 +30,40 @@ import java.util.TreeSet;
 
 public class TaskStatus {
 
-    private final PairedList selfDurations = new PairedList();
-    private final PairedList totalDurations = new PairedList();
-
-    public void addSelf(long timestamp, long duration) {
-        selfDurations.add(timestamp, duration);
-    }
-
-    public void addTotal(long timestamp, long duration) {
-        totalDurations.add(timestamp, duration);
-    }
-
     public PairedList getSelf() {
-        return selfDurations;
+        SortedSet<Task> sortedSet = new TreeSet<>(new Comparator<Task>() {
+            @Override
+            public int compare(Task o1, Task o2) {
+                return Long.compare(o1.getTime(), o2.getTime());
+            }
+        });
+
+        sortedSet.addAll(tasks.values());
+
+        PairedList pairs = new PairedList();
+        for (Task t : sortedSet) {
+            pairs.add(t.getTime(), t.getSelfTime());
+        }
+
+        return pairs;
     }
 
     public PairedList getTotal() {
-        return totalDurations;
+        SortedSet<Task> sortedSet = new TreeSet<>(new Comparator<Task>() {
+            @Override
+            public int compare(Task o1, Task o2) {
+                return Long.compare(o1.getTime(), o2.getTime());
+            }
+        });
+
+        sortedSet.addAll(tasks.values());
+
+        PairedList pairs = new PairedList();
+        for (Task t : sortedSet) {
+            pairs.add(t.getTime(), t.getTotalTime());
+        }
+
+        return pairs;
     }
 
     private final Map<Long, Timeline<Integer>> tl;

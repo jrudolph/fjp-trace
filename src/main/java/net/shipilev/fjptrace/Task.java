@@ -8,6 +8,9 @@ import java.util.List;
 public class Task {
     private final List<Task> children = new ArrayList<>();
     private int depth;
+    private long time;
+    private long selfTime;
+    private long totalTime;
 
     public Task(int depth) {
         this.depth = depth;
@@ -27,5 +30,27 @@ public class Task {
 
     public void setDepth(int depth) {
         this.depth = depth;
+    }
+
+    public void addSelf(long time, long duration) {
+        this.time = time;
+        this.selfTime = duration;
+    }
+
+    public void addTotal(long time, long duration) {
+        this.time = time;
+        this.totalTime = duration;
+    }
+
+    public long getTotalTime() {
+        return totalTime;
+    }
+
+    public long getTime() {
+        return time;
+    }
+
+    public long getSelfTime() {
+        return selfTime;
     }
 }

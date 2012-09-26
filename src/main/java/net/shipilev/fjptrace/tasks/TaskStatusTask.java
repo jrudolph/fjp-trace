@@ -111,7 +111,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                         continue;
                     }
                     timings.add(task, e.time - s);
-                    taskStatus.addSelf((e.time - timings.count(task) / 2), timings.count(task));
+                    task.addSelf((e.time - timings.count(task) / 2), timings.count(task));
                     timings.removeKey(task);
 
                     // count the time
@@ -119,7 +119,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     if (s1 == null) {
                         continue;
                     }
-                    taskStatus.addTotal((e.time + s1) / 2, e.time - s1);
+                    task.addTotal((e.time + s1) / 2, e.time - s1);
 
                     Task parent = parentTasks.remove(task);
                     if (parent != null) {
