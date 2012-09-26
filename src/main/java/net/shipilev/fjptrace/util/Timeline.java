@@ -68,7 +68,7 @@ public class Timeline<T> {
     }
 
     public <T extends Comparable<T>> int binarySearch(List<T> list, int from, int to, T key, int guess) {
-        if (key.compareTo(list.get(guess)) == 0) {
+        if ((guess < to) && key.compareTo(list.get(guess)) == 0) {
             return guess;
         }
 
