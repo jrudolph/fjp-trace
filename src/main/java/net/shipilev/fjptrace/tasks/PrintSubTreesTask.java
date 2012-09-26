@@ -16,15 +16,11 @@
 
 package net.shipilev.fjptrace.tasks;
 
-import net.shipilev.fjptrace.Event;
-import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
+import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskSubgraphs;
-import net.shipilev.fjptrace.util.GZIPOutputStreamEx;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -50,13 +46,13 @@ public class PrintSubTreesTask extends LoggedRecursiveAction {
         DescriptiveStatistics arities = new DescriptiveStatistics();
         DescriptiveStatistics counts = new DescriptiveStatistics();
 
-        for (TaskSubgraphs.Task t : subgraphs.getParents()) {
+        for (Task t : subgraphs.getParents()) {
 
             // compute transitive closure
 
-            Set<TaskSubgraphs.Task> visited = new HashSet<>();
-            List<TaskSubgraphs.Task> prev = new ArrayList<>();
-            List<TaskSubgraphs.Task> cur = new ArrayList<>();
+            Set<Task> visited = new HashSet<>();
+            List<Task> prev = new ArrayList<>();
+            List<Task> cur = new ArrayList<>();
 
             int depth = 0;
 
@@ -65,8 +61,8 @@ public class PrintSubTreesTask extends LoggedRecursiveAction {
                 prev.clear();
                 prev.addAll(cur);
                 cur.clear();
-                for (TaskSubgraphs.Task c : prev) {
-                    Collection<TaskSubgraphs.Task> children = c.getChildren();
+                for (Task c : prev) {
+                    Collection<Task> children = c.getChildren();
                     if (!children.isEmpty()) {
                         arities.addValue(children.size());
                         cur.addAll(children);

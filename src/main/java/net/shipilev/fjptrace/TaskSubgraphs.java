@@ -18,12 +18,9 @@ package net.shipilev.fjptrace;
 
 import net.shipilev.fjptrace.util.Timeline;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -100,16 +97,5 @@ public class TaskSubgraphs {
         return parents;
     }
 
-    public static class Task {
-        private final List<Task> children = new ArrayList<>();
-
-        public void addChild(Task child) {
-            children.add(child);
-        }
-
-        public Collection<Task> getChildren() {
-            return Collections.unmodifiableCollection(children);
-        }
-    }
 }
 
