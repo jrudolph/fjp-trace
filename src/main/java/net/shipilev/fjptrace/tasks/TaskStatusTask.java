@@ -18,6 +18,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskStatus;
 import net.shipilev.fjptrace.util.Multiset;
 
@@ -37,38 +38,43 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
     public TaskStatus doWork() throws Exception {
         TaskStatus taskStatus = new TaskStatus(events.getWorkers());
 
-        Map<Integer, Long> execTime = new HashMap<>();
-        Map<Integer, Long> lastSelfTime = new HashMap<>();
+        Map<Task, Long> execTime = new HashMap<>();
+        Map<Task, Long> lastSelfTime = new HashMap<>();
 
-        Map<Long, Integer> currentExec = new HashMap<>();
-        Map<Integer, Integer> parentTasks = new HashMap<>();
+        Map<Long, Task> currentExec = new HashMap<>();
+        Map<Task, Task> parentTasks = new HashMap<>();
 
-        Multiset<Integer> timings = new Multiset<>();
+        Multiset<Task> timings = new Multiset<>();
 
-        Map<Integer, Integer> taskToID = new HashMap<>();
+        Map<Task, Integer> taskToID = new HashMap<>();
 
         int externalTaskID = 0;
 
         for (Event e : events) {
             switch (e.eventType) {
-                case SUBMIT:
-                    taskToID.put(e.taskTag, externalTaskID++);
-                    taskStatus.parent(e.taskTag);
-                    break;
-
-                case FORK: {
-                    Integer currentTask = currentExec.get(e.workerId);
-                    taskToID.put(e.taskTag, taskToID.get(currentTask));
-                    taskStatus.link(currentTask, e.taskTag);
+                case SUBMIT: {
+                    Task task = taskStatus.newTask(e.taskTag);
+                    taskToID.put(task, externalTaskID++);
+                    taskStatus.parent(task);
                     break;
                 }
 
-                case EXEC:
-                    Integer currentTask = currentExec.get(e.workerId);
+                case FORK: {
+                    Task task = taskStatus.newTask(e.taskTag);
+                    Task currentTask = currentExec.get(e.workerId);
+                    taskToID.put(task, taskToID.get(currentTask));
+                    taskStatus.link(currentTask, task);
+                    break;
+                }
+
+                case EXEC: {
+                    Task currentTask = currentExec.get(e.workerId);
+                    Task newTask = taskStatus.get(e.taskTag);
 
                     if (currentTask != null) {
                         // about to leave parent
-                        parentTasks.put(e.taskTag, currentTask);
+
+                        parentTasks.put(newTask, currentTask);
 
                         Long start = lastSelfTime.remove(currentTask);
                         if (start == null) {
@@ -78,43 +84,44 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     }
 
                     // start executing
-                    lastSelfTime.put(e.taskTag, e.time);
-                    currentExec.put(e.workerId, e.taskTag);
-                    execTime.put(e.taskTag, e.time);
+                    lastSelfTime.put(newTask, e.time);
+                    currentExec.put(e.workerId, newTask);
+                    execTime.put(newTask, e.time);
 
                     Integer id = taskToID.get(currentTask);
                     if (id != null) {
-                        taskToID.put(e.taskTag, id);
+                        taskToID.put(newTask, id);
                     }
 
-                    Integer thisTaskId = taskToID.get(e.taskTag);
+                    Integer thisTaskId = taskToID.get(newTask);
                     if (thisTaskId != null) {
                         taskStatus.register(e.time, e.workerId, thisTaskId);
                     }
 
                     break;
+                }
 
-                case EXECUTED:
+                case EXECUTED: {
                     // record worker is free
-                    currentExec.remove(e.workerId);
+                    Task task = currentExec.remove(e.workerId);
 
                     // count remaining self time
-                    Long s = lastSelfTime.remove(e.taskTag);
+                    Long s = lastSelfTime.remove(task);
                     if (s == null) {
                         continue;
                     }
-                    timings.add(e.taskTag, e.time - s);
-                    taskStatus.addSelf((e.time - timings.count(e.taskTag) / 2), timings.count(e.taskTag));
-                    timings.removeKey(e.taskTag);
+                    timings.add(task, e.time - s);
+                    taskStatus.addSelf((e.time - timings.count(task) / 2), timings.count(task));
+                    timings.removeKey(task);
 
                     // count the time
-                    Long s1 = execTime.remove(e.taskTag);
+                    Long s1 = execTime.remove(task);
                     if (s1 == null) {
                         continue;
                     }
                     taskStatus.addTotal((e.time + s1) / 2, e.time - s1);
 
-                    Integer parent = parentTasks.remove(e.taskTag);
+                    Task parent = parentTasks.remove(task);
                     if (parent != null) {
                         // getting back to parent
                         lastSelfTime.put(parent, e.time);
@@ -131,6 +138,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     }
 
                     break;
+                }
             }
         }
 

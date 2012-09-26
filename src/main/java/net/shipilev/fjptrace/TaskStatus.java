@@ -76,22 +76,16 @@ public class TaskStatus {
         tl.get(workerId).add(time, id);
     }
 
-    public void parent(int parent) {
-        Task parentTask = new Task(0);
-        tasks.put(parent, parentTask);
+    public void parent(Task parentTask) {
+        parentTask.setDepth(0);
         parents.add(parentTask);
     }
 
-    public void link(int parent, int child) {
-        Task parentTask = tasks.get(parent);
-        if (parentTask == null) {
+    public void link(Task parentTask, Task childTask) {
+        if (!parents.contains(parentTask)) {
             // do nothing
         } else {
-            Task childTask = tasks.get(child);
-            if (childTask == null) {
-                childTask = new Task(parentTask.getDepth() + 1);
-                tasks.put(child, childTask);
-            }
+            childTask.setDepth(parentTask.getDepth() + 1);
             parentTask.addChild(childTask);
         }
     }
@@ -115,6 +109,16 @@ public class TaskStatus {
 
     public Collection<Task> getParents() {
         return parents;
+    }
+
+    public Task newTask(int taskTag) {
+        Task task = new Task(-1);
+        tasks.put(taskTag, task);
+        return task;
+    }
+
+    public Task get(int taskTag) {
+        return tasks.get(taskTag);
     }
 
 }

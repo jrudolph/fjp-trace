@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Task {
     private final List<Task> children = new ArrayList<>();
-    private final int depth;
+    private int depth;
 
     public Task(int depth) {
         this.depth = depth;
@@ -23,5 +23,9 @@ public class Task {
 
     public Collection<Task> getChildren() {
         return Collections.unmodifiableCollection(children);
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 }
