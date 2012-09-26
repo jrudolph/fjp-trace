@@ -7,9 +7,18 @@ import java.util.List;
 
 public class Task {
     private final List<Task> children = new ArrayList<>();
+    private final int depth;
+
+    public Task(int depth) {
+        this.depth = depth;
+    }
 
     public void addChild(Task child) {
         children.add(child);
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public Collection<Task> getChildren() {

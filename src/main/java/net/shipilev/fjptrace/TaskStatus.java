@@ -77,21 +77,21 @@ public class TaskStatus {
     }
 
     public void parent(int parent) {
-        Task parentTask = new Task();
+        Task parentTask = new Task(0);
         tasks.put(parent, parentTask);
         parents.add(parentTask);
     }
 
     public void link(int parent, int child) {
-        Task childTask = tasks.get(child);
-        if (childTask == null) {
-            childTask = new Task();
-            tasks.put(child, childTask);
-        }
         Task parentTask = tasks.get(parent);
         if (parentTask == null) {
-            orphans.add(childTask);
+            // do nothing
         } else {
+            Task childTask = tasks.get(child);
+            if (childTask == null) {
+                childTask = new Task(parentTask.getDepth() + 1);
+                tasks.put(child, childTask);
+            }
             parentTask.addChild(childTask);
         }
     }
