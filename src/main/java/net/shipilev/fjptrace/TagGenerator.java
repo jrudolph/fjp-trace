@@ -15,6 +15,7 @@ public final class TagGenerator {
 
     private static final int INITIAL_VALUE = 1;
 
+    public static final int DISABLED = -1000;
     public static final int NULL_TASK_ID = -1;
     public static final int NOT_FJP_THREAD = -2;
 
