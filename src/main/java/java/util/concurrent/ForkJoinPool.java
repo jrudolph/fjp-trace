@@ -1216,10 +1216,12 @@ public class ForkJoinPool extends AbstractExecutorService {
     private static final int BUFFER_LIMIT = Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferSize", 1024*1024);
     private static final long BUFFER_TIME = TimeUnit.MILLISECONDS.toNanos(Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferTimeMsec", 1000));
 
+    static final TagGenerator TAG_GENERATOR;
 
     static {
         System.err.println("Using instrumented ForkJoinPool");
         System.err.println(TRACE ? "Tracing enabled, logging to " + TRACE_LOG + " with per-worker buffers of " + (BUFFER_LIMIT / 1024) + "Kb" : "Tracing is disabled");
+        TAG_GENERATOR = TRACE ? new TagGenerator() : null;
     }
 
     /**
@@ -1326,7 +1328,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     final AtomicInteger nextWorkerNumber;      // to create worker name string
     final String workerNamePrefix;             // to create worker name string
     final OutputStream traceWriter;            // trace writer
-    final TagGenerator tagGenerator;           // trace tag generator
 
     //  Creating, registering, and deregistering workers
 
@@ -2254,14 +2255,12 @@ public class ForkJoinPool extends AbstractExecutorService {
         if (TRACE) {
             try {
                 traceWriter = new FileOutputStream(TRACE_LOG);
-                tagGenerator = new TagGenerator();
             } catch (IOException e) {
                 // FIXME: Should not throw exception here?
                 throw new IllegalStateException(e);
             }
         } else {
             traceWriter = null;
-            tagGenerator = null;
         }
     }
 

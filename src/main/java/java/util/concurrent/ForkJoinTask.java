@@ -229,10 +229,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
     final int traceTag;
 
     protected ForkJoinTask() {
-        Thread t = Thread.currentThread();
-        TagGenerator gen = ((t instanceof ForkJoinWorkerThread) ?
-                        ((ForkJoinWorkerThread) t).pool.tagGenerator : null);
-        traceTag = (gen == null) ? TagGenerator.NOT_FJP_THREAD : gen.next();
+        traceTag = (ForkJoinPool.TAG_GENERATOR == null) ? TagGenerator.DISABLED : ForkJoinPool.TAG_GENERATOR.next();
     }
 
     /**
