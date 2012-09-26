@@ -35,7 +35,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
     @Override
     public TaskStatus doWork() throws Exception {
-        TaskStatus taskStatus = new TaskStatus();
+        TaskStatus taskStatus = new TaskStatus(events.getWorkers());
 
         Map<Integer, Long> execTime = new HashMap<>();
         Map<Integer, Long> lastSelfTime = new HashMap<>();
@@ -45,8 +45,24 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
         Multiset<Integer> timings = new Multiset<>();
 
+        Map<Integer, Integer> taskToID = new HashMap<>();
+
+        int externalTaskID = 0;
+
         for (Event e : events) {
             switch (e.eventType) {
+                case SUBMIT:
+                    taskToID.put(e.taskTag, externalTaskID++);
+                    taskStatus.parent(e.taskTag);
+                    break;
+
+                case FORK: {
+                    Integer currentTask = currentExec.get(e.workerId);
+                    taskToID.put(e.taskTag, taskToID.get(currentTask));
+                    taskStatus.link(currentTask, e.taskTag);
+                    break;
+                }
+
                 case EXEC:
                     Integer currentTask = currentExec.get(e.workerId);
 
@@ -65,6 +81,16 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     lastSelfTime.put(e.taskTag, e.time);
                     currentExec.put(e.workerId, e.taskTag);
                     execTime.put(e.taskTag, e.time);
+
+                    Integer id = taskToID.get(currentTask);
+                    if (id != null) {
+                        taskToID.put(e.taskTag, id);
+                    }
+
+                    Integer thisTaskId = taskToID.get(e.taskTag);
+                    if (thisTaskId != null) {
+                        taskStatus.register(e.time, e.workerId, thisTaskId);
+                    }
 
                     break;
 
@@ -93,6 +119,15 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                         // getting back to parent
                         lastSelfTime.put(parent, e.time);
                         currentExec.put(e.workerId, parent);
+
+                        // next task is parent
+                        Integer parentId = taskToID.get(parent);
+                        if (parentId != null) {
+                            taskStatus.register(e.time, e.workerId, parentId);
+                        }
+                    } else {
+                        // this is parent, no other tasks
+                        taskStatus.register(e.time, e.workerId, TaskStatus.NO_ID);
                     }
 
                     break;

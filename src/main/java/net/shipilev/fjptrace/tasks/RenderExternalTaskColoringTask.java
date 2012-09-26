@@ -19,7 +19,7 @@ package net.shipilev.fjptrace.tasks;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Selectors;
-import net.shipilev.fjptrace.TaskSubgraphs;
+import net.shipilev.fjptrace.TaskStatus;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -28,10 +28,10 @@ import java.util.Random;
 import java.util.SortedSet;
 
 public class RenderExternalTaskColoringTask extends AbstractGraphTask {
-    private final TaskSubgraphs data;
+    private final TaskStatus data;
     private final Map<Integer, Color> colors;
 
-    public RenderExternalTaskColoringTask(Options opts, Events events, TaskSubgraphs data) {
+    public RenderExternalTaskColoringTask(Options opts, Events events, TaskStatus data) {
         super(opts, events, "External task coloring", opts.getTargetPrefix() + "-externalColors.png");
         this.data = data;
 
@@ -51,7 +51,7 @@ public class RenderExternalTaskColoringTask extends AbstractGraphTask {
     protected Color getColor(long tick, long worker) {
         Integer id = data.get(tick, worker);
         if (id != null) {
-            if (id != TaskSubgraphs.NO_ID) {
+            if (id != TaskStatus.NO_ID) {
                 return colors.get(id);
             } else {
                 return Selectors.COLOR_DARK_GRAY;

@@ -18,7 +18,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Task;
-import net.shipilev.fjptrace.TaskSubgraphs;
+import net.shipilev.fjptrace.TaskStatus;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import java.util.ArrayList;
@@ -29,9 +29,9 @@ import java.util.Set;
 
 public class PrintSubTreesTask extends LoggedRecursiveAction {
 
-    private final TaskSubgraphs subgraphs;
+    private final TaskStatus subgraphs;
 
-    public PrintSubTreesTask(Options opts, TaskSubgraphs subgraphs) {
+    public PrintSubTreesTask(Options opts, TaskStatus subgraphs) {
         super("Print task trees");
         this.subgraphs = subgraphs;
     }

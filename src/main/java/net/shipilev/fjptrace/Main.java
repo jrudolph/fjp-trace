@@ -26,7 +26,6 @@ import net.shipilev.fjptrace.tasks.RenderWorkerQueueTask;
 import net.shipilev.fjptrace.tasks.ReadTask;
 import net.shipilev.fjptrace.tasks.RenderWorkerStateTask;
 import net.shipilev.fjptrace.tasks.TaskStatusTask;
-import net.shipilev.fjptrace.tasks.TaskSubgraphTask;
 import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
 import net.shipilev.fjptrace.tasks.WorkerStatusTask;
 
@@ -81,16 +80,13 @@ public class Main {
 
             {
                 TaskStatusTask tStatus = new TaskStatusTask(events);
-                TaskSubgraphTask tsStatus = new TaskSubgraphTask(events);
                 tStatus.fork();
-                tsStatus.fork();
                 ForkJoinTask.invokeAll(
-                        new RenderExternalTaskColoringTask(opts, events, tsStatus.join()),
+                        new RenderExternalTaskColoringTask(opts, events, tStatus.join()),
                         new RenderTaskExecTimeTask(opts, events, tStatus.join()),
-                        new PrintSubTreesTask(opts, tsStatus.join())
+                        new PrintSubTreesTask(opts, tStatus.join())
                         );
                 tStatus = null;
-                tsStatus = null;
             }
 
             {
