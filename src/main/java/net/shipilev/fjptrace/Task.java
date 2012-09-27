@@ -12,6 +12,7 @@ public class Task {
     private long time;
     private long selfTime;
     private long totalTime;
+    private long worker;
 
     public Task(int taskTag) {
         this.taskTag = taskTag;
@@ -77,5 +78,13 @@ public class Task {
     @Override
     public int hashCode() {
         return taskTag;
+    }
+
+    public void setWorker(long worker) {
+        this.worker = worker;
+    }
+
+    public long getWorker() {
+        return worker;
     }
 }

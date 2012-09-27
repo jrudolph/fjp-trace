@@ -18,7 +18,7 @@ package net.shipilev.fjptrace;
 
 import net.shipilev.fjptrace.tasks.CheckEventsTask;
 import net.shipilev.fjptrace.tasks.PrintEventsTask;
-import net.shipilev.fjptrace.tasks.PrintSubTreesTask;
+import net.shipilev.fjptrace.tasks.PrintSummaryTask;
 import net.shipilev.fjptrace.tasks.PrintWorkerStateTask;
 import net.shipilev.fjptrace.tasks.RenderExternalTaskColoringTask;
 import net.shipilev.fjptrace.tasks.RenderTaskExecTimeTask;
@@ -84,7 +84,7 @@ public class Main {
                 ForkJoinTask.invokeAll(
                         new RenderExternalTaskColoringTask(opts, events, tStatus.join()),
                         new RenderTaskExecTimeTask(opts, events, tStatus.join()),
-                        new PrintSubTreesTask(opts, tStatus.join())
+                        new PrintSummaryTask(opts, tStatus.join())
                         );
                 tStatus = null;
             }

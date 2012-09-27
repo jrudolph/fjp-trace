@@ -71,6 +71,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                 case EXEC: {
                     Task currentTask = currentExec.get(e.workerId);
                     Task newTask = taskStatus.get(e.taskTag);
+                    newTask.setWorker(e.workerId);
 
                     if (currentTask != null) {
                         // about to leave parent
