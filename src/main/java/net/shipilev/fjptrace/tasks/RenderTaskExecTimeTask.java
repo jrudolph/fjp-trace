@@ -30,6 +30,7 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYDotRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -42,6 +43,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
@@ -112,8 +114,9 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             final XYPlot plot = chart.getXYPlot();
             XYDotRenderer renderer = new XYDotRenderer();
             renderer.setDefaultEntityRadius(3);
-            renderer.setSeriesPaint(0, Color.GREEN);
+            enforceSeriesPaint(renderer);
             plot.setRenderer(renderer);
+
             plot.setBackgroundPaint(Color.black);
             plot.setForegroundAlpha(0.65f);
             plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
@@ -181,15 +184,13 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
         private JFreeChart getYHistogram(ValueAxis rangeAxis, AxisSpace space) {
             final HistogramDataset histDataSet = new HistogramDataset();
-//            long[] d = data.getAllY();
-            long[] d = new long[1];
-
-            double[] values = new double[d.length];
-            for (int c = 0; c < d.length; c++) {
-                values[c] = nanosToSeconds(d[c]);
-            }
-            if (values.length > 0) {
-                histDataSet.addSeries("H1", values, width);
+            for (Integer depth : data.keySet()) {
+                long[] d = data.get(depth).filter(1).getAllY();
+                double[] values = new double[d.length];
+                for (int c = 0; c < d.length; c++) {
+                    values[c] = nanosToSeconds(d[c]);
+                }
+                histDataSet.addSeries("depth = " + depth, values, width);
             }
 
             final JFreeChart histChart = ChartFactory.createHistogram(
@@ -206,21 +207,19 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             histPlot.setDomainAxis(rangeAxis);
             histPlot.setFixedRangeAxisSpace(space);
             histPlot.setBackgroundPaint(Color.black);
-            histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
+            enforceSeriesPaint(histPlot.getRenderer());
             return histChart;
         }
 
         private JFreeChart getXHistogram(ValueAxis axis, AxisSpace space) {
             final HistogramDataset histDataSet = new HistogramDataset();
-//            long[] d = data.getAllX();
-            long[] d = new long[1];
-
-            double[] values = new double[d.length];
-            for (int c = 0; c < d.length; c++) {
-                values[c] = nanosToSeconds(d[c]);
-            }
-            if (values.length > 0) {
-                histDataSet.addSeries("H1", values, height);
+            for (Integer depth : data.keySet()) {
+                long[] d = data.get(depth).filter(1).getAllX();
+                double[] values = new double[d.length];
+                for (int c = 0; c < d.length; c++) {
+                    values[c] = nanosToSeconds(d[c]);
+                }
+                histDataSet.addSeries("depth = " + depth, values, width);
             }
 
             final JFreeChart histChart = ChartFactory.createHistogram(
@@ -237,9 +236,28 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             axis.setAutoRange(false);
             histPlot.setDomainAxis(axis);
             histPlot.setBackgroundPaint(Color.black);
-            histPlot.getRenderer().setSeriesPaint(0, Color.GREEN);
+            enforceSeriesPaint(histPlot.getRenderer());
             return histChart;
         }
+
+        /**
+         * Use to enforce the same color scheme.
+         * @param renderer
+         */
+        private void enforceSeriesPaint(XYItemRenderer renderer) {
+            renderer.setSeriesPaint(0, Color.WHITE);
+            renderer.setSeriesPaint(1, Color.RED);
+            renderer.setSeriesPaint(2, Color.GREEN);
+            renderer.setSeriesPaint(3, Color.BLUE);
+            renderer.setSeriesPaint(4, Color.YELLOW);
+            renderer.setSeriesPaint(5, Color.MAGENTA);
+            renderer.setSeriesPaint(6, Color.LIGHT_GRAY);
+            Random r = new Random(1);
+            for (int c = 7; c < 100; c++) {
+                renderer.setSeriesPaint(c, new Color(r.nextInt(255), r.nextInt(255), r.nextInt(255)));
+            }
+        }
+
 
     }
 
