@@ -39,7 +39,7 @@ public class PrintSummaryTask extends LoggedRecursiveAction {
     private final String fileName;
 
     public PrintSummaryTask(Options opts, TaskStatus subgraphs) {
-        super("Print task trees");
+        super("Print summary");
         this.fileName = opts.getTargetPrefix() + "-summary.txt";
         this.subgraphs = subgraphs;
     }
@@ -106,6 +106,13 @@ public class PrintSummaryTask extends LoggedRecursiveAction {
             global.threads.addValue(workers.size());
         }
 
+        pw.println("Summary statistics:");
+        pw.printf("  total external tasks = %.0f\n", layerStats.get(0).counts.getSum());
+        pw.printf("  total subtasks = %.0f\n", global.counts.getSum());
+        pw.printf("  total threads = %.0f\n", global.threads.getMean());
+
+        pw.println();
+
         pw.println("Per task statistics:");
         pw.printf("  tasks:   sum = %10.0f, min = %5.2f, avg = %5.2f, max = %5.2f\n", global.counts.getSum(), global.counts.getMin(), global.counts.getMean(), global.counts.getMax());
         pw.printf("  depth:                     min = %5.2f, avg = %5.2f, max = %5.2f\n", global.depths.getMin(), global.depths.getMean(), global.depths.getMax());
@@ -113,7 +120,7 @@ public class PrintSummaryTask extends LoggedRecursiveAction {
         pw.printf("  threads:                   min = %5.2f, avg = %5.2f, max = %5.2f\n", global.threads.getMin(), global.threads.getMean(), global.threads.getMax());
 
         pw.println();
-        pw.println("Per-depth statistics:");
+        pw.println("Per task + per depth statistics:");
         for (Integer depth : layerStats.keySet()) {
             LayerStatistics s = layerStats.get(depth);
             pw.printf("  Depth = %d: \n", depth);

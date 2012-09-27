@@ -7,8 +7,7 @@ JSR-166 concurrency interest: http://g.oswego.edu/dl/concurrency-interest/
 
 GENERATED DATA (aka FEATURES):
 
-Most of the graphs are showing the progress in time, rather than estimating point
-metrics. It is easy to extend fjp-trace to get the measurable metrics out.
+Most of the graphs are showing the progress in time.
 
  1. *-events.txt.gz: raw event stream
      This is the event stream, sorted by time, and printed in human-readable form.
@@ -40,6 +39,8 @@ metrics. It is easy to extend fjp-trace to get the measurable metrics out.
      problems. Also, the graph is rather psychedelic, and can be (but probably
      should not be) used in conjunction with appropriate chemical agents to bring
      the unforgettable experience.
+
+ 7. *-summary.txt: summary statistics for tasks executed
 
 If there is something else sorely needed, don't hesitate to raise the issue.
 
