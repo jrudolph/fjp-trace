@@ -26,11 +26,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class TaskStatus {
 
-    public PairedList getSelf() {
+    public Map<Integer, PairedList> getSelf() {
         SortedSet<Task> sortedSet = new TreeSet<>(new Comparator<Task>() {
             @Override
             public int compare(Task o1, Task o2) {
@@ -40,15 +41,22 @@ public class TaskStatus {
 
         sortedSet.addAll(tasks.values());
 
-        PairedList pairs = new PairedList();
+        Map<Integer, PairedList> depthLists = new TreeMap<>();
+
         for (Task t : sortedSet) {
+            PairedList pairs = depthLists.get(t.getDepth());
+            if (pairs == null) {
+                pairs = new PairedList();
+                depthLists.put(t.getDepth(), pairs);
+            }
+
             pairs.add(t.getTime(), t.getSelfTime());
         }
 
-        return pairs;
+        return depthLists;
     }
 
-    public PairedList getTotal() {
+    public Map<Integer, PairedList> getTotal() {
         SortedSet<Task> sortedSet = new TreeSet<>(new Comparator<Task>() {
             @Override
             public int compare(Task o1, Task o2) {
@@ -58,12 +66,21 @@ public class TaskStatus {
 
         sortedSet.addAll(tasks.values());
 
-        PairedList pairs = new PairedList();
+        Map<Integer, PairedList> depthLists = new TreeMap<>();
+
         for (Task t : sortedSet) {
+            PairedList pairs = depthLists.get(t.getDepth());
+            if (pairs == null) {
+                pairs = new PairedList();
+                depthLists.put(t.getDepth(), pairs);
+            }
+
             pairs.add(t.getTime(), t.getTotalTime());
         }
 
-        return pairs;
+        System.err.println("DEPTH = " + depthLists.size());
+
+        return depthLists;
     }
 
     private final Map<Long, Timeline<Integer>> tl;
@@ -100,12 +117,12 @@ public class TaskStatus {
     }
 
     public void link(Task parentTask, Task childTask) {
-        if (!parents.contains(parentTask)) {
-            // do nothing
-        } else {
-            childTask.setDepth(parentTask.getDepth() + 1);
-            parentTask.addChild(childTask);
+        if (parentTask == null) {
+            orphans.add(childTask);
+            return;
         }
+        childTask.setDepth(parentTask.getDepth() + 1);
+        parentTask.addChild(childTask);
     }
 
     public SortedSet<Long> getTimes() {
@@ -130,8 +147,11 @@ public class TaskStatus {
     }
 
     public Task newTask(int taskTag) {
-        Task task = new Task(-1);
-        tasks.put(taskTag, task);
+        Task task = get(taskTag);
+        if (task == null) {
+            task = new Task(taskTag);
+            tasks.put(taskTag, task);
+        }
         return task;
     }
 

@@ -75,7 +75,7 @@ public class PrintSubTreesTask extends LoggedRecursiveAction {
             counts.addValue(visited.size());
         }
 
-//        getPw().println("Depths: " + depths);
+        getPw().println("Depths: " + depths);
 //        getPw().println("Counts: " + counts);
 //        getPw().println("Arities: " + arities);
 

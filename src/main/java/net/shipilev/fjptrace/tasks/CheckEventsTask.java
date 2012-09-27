@@ -34,6 +34,7 @@ public class CheckEventsTask extends LoggedRecursiveAction {
     @Override
     public void doWork() throws Exception {
         Map<Integer, Event> submittedTasks = new HashMap<>();
+        Map<Integer, Event> invokedTasks = new HashMap<>();
         Map<Integer, Event> forkedTasks = new HashMap<>();
         Map<Integer, Event> executingTasks = new HashMap<>();
 
@@ -48,6 +49,22 @@ public class CheckEventsTask extends LoggedRecursiveAction {
 
                     break;
                 }
+
+                case INVOKE: {
+                    invokedTasks.put(e.taskTag, e);
+
+                    Event forkedEvent = forkedTasks.remove(e.taskTag);
+                    Event submitEvent = submittedTasks.remove(e.taskTag);
+                    if (forkedEvent != null) {
+                        getPw().println("WARNING: Invoking the task of which is already forked! This event: " + e);
+                    }
+                    if (submitEvent != null) {
+                        getPw().println("WARNING: Invoking the task of which is externally submitted! This event: " + e);
+                    }
+
+                    break;
+                }
+
 
                 case FORK: {
                     if (executingTasks.containsKey(e.taskTag)) {
@@ -70,7 +87,8 @@ public class CheckEventsTask extends LoggedRecursiveAction {
 
                     Event forkedEvent = forkedTasks.remove(e.taskTag);
                     Event submitEvent = submittedTasks.remove(e.taskTag);
-                    if (forkedEvent == null && submitEvent == null) {
+                    Event invokedEvent = invokedTasks.remove(e.taskTag);
+                    if (forkedEvent == null && submitEvent == null && invokedEvent == null) {
                         getPw().println("WARNING: Executing the task of unknown origin! This event: " + e);
                     }
 

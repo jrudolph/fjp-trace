@@ -54,6 +54,11 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     taskToWorker.put(e.taskTag, e.workerId);
                     break;
 
+                case INVOKE:
+                    status.register(e.time, e.workerId, currentCount.add(e.workerId));
+                    taskToWorker.put(e.taskTag, e.workerId);
+                    break;
+
                 case EXEC: {
                     Long owner = taskToWorker.remove(e.taskTag);
 

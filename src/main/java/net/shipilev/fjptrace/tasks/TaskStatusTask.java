@@ -59,6 +59,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     break;
                 }
 
+                case INVOKE:
                 case FORK: {
                     Task task = taskStatus.newTask(e.taskTag);
                     Task currentTask = currentExec.get(e.workerId);
@@ -111,7 +112,9 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                         continue;
                     }
                     timings.add(task, e.time - s);
-                    task.addSelf((e.time - timings.count(task) / 2), timings.count(task));
+                    if (task != null) {
+                        task.addSelf((e.time - timings.count(task) / 2), timings.count(task));
+                    }
                     timings.removeKey(task);
 
                     // count the time
@@ -119,7 +122,9 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
                     if (s1 == null) {
                         continue;
                     }
-                    task.addTotal((e.time + s1) / 2, e.time - s1);
+                    if (task != null) {
+                        task.addTotal((e.time + s1) / 2, e.time - s1);
+                    }
 
                     Task parent = parentTasks.remove(task);
                     if (parent != null) {

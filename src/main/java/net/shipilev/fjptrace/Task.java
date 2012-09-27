@@ -7,13 +7,15 @@ import java.util.List;
 
 public class Task {
     private final List<Task> children = new ArrayList<>();
-    private int depth;
+    private final int taskTag;
+    private volatile int depth;
     private long time;
     private long selfTime;
     private long totalTime;
 
-    public Task(int depth) {
-        this.depth = depth;
+    public Task(int taskTag) {
+        this.taskTag = taskTag;
+        this.depth = -1;
     }
 
     public void addChild(Task child) {
@@ -52,5 +54,28 @@ public class Task {
 
     public long getSelfTime() {
         return selfTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Task task = (Task) o;
+
+        if (taskTag != task.taskTag) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return taskTag;
     }
 }

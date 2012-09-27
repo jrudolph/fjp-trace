@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
@@ -63,20 +64,20 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
     @Override
     protected void compute() {
         ForkJoinTask.invokeAll(
-                new TaskStatsGraphTask(events, taskStatus.getSelf().filter(1), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, sec, LOG scale"),
-                new TaskStatsGraphTask(events, taskStatus.getTotal().filter(1), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, sec, LOG scale")
+                new TaskStatsGraphTask(events, taskStatus.getSelf(), prefix + "-exectimeExclusive.png", "Task execution time (exclusive)", "Time to execute, sec, LOG scale"),
+                new TaskStatsGraphTask(events, taskStatus.getTotal(), prefix + "-exectimeInclusive.png", "Task execution times (inclusive, including subtasks)", "Time to execute, sec, LOG scale")
         );
     }
 
     public class TaskStatsGraphTask extends LoggedRecursiveAction {
 
         private final Events events;
-        private final PairedList data;
+        private final Map<Integer, PairedList> data;
         private final String filename;
         private final String chartLabel;
         private final String yLabel;
 
-        private TaskStatsGraphTask(Events events, PairedList data, String filename, String chartLabel, String yLabel) {
+        private TaskStatsGraphTask(Events events, Map<Integer, PairedList> data, String filename, String chartLabel, String yLabel) {
             super("Task statistics render \"" + chartLabel + "\"");
             this.events = events;
             this.data = data;
@@ -87,22 +88,23 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
         @Override
         protected void doWork() {
-            XYSeries series = new XYSeries("");
-            for (PairedList.Pair entry : data) {
-                if (entry.getK2() > 0) {
-                    series.add(nanosToSeconds(entry.getK1()), nanosToSeconds(entry.getK2()), false);
-                }
-            }
-
             final XYSeriesCollection dataset = new XYSeriesCollection();
-            dataset.addSeries(series);
+            for (Integer depth : data.keySet()) {
+                XYSeries series = new XYSeries("depth = " + depth);
+                for (PairedList.Pair entry : data.get(depth).filter(1)) {
+                    if (entry.getK2() > 0) {
+                        series.add(nanosToSeconds(entry.getK1()), nanosToSeconds(entry.getK2()), false);
+                    }
+                }
+                dataset.addSeries(series);
+            }
 
             final JFreeChart chart = ChartFactory.createXYLineChart(
                     "",
                     "Run time, sec", yLabel,
                     dataset,
                     PlotOrientation.HORIZONTAL,
-                    false, false, false
+                    true, false, false
             );
 
             chart.setBackgroundPaint(Color.white);
@@ -179,7 +181,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
         private JFreeChart getYHistogram(ValueAxis rangeAxis, AxisSpace space) {
             final HistogramDataset histDataSet = new HistogramDataset();
-            long[] d = data.getAllY();
+//            long[] d = data.getAllY();
+            long[] d = new long[1];
 
             double[] values = new double[d.length];
             for (int c = 0; c < d.length; c++) {
@@ -209,7 +212,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
         private JFreeChart getXHistogram(ValueAxis axis, AxisSpace space) {
             final HistogramDataset histDataSet = new HistogramDataset();
-            long[] d = data.getAllX();
+//            long[] d = data.getAllX();
+            long[] d = new long[1];
 
             double[] values = new double[d.length];
             for (int c = 0; c < d.length; c++) {
