@@ -20,6 +20,7 @@ import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.TaskStatus;
 import net.shipilev.fjptrace.util.PairedList;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
@@ -90,12 +91,16 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
         @Override
         protected void doWork() {
+            DescriptiveStatistics rangeStatistics = new DescriptiveStatistics();
+
             final XYSeriesCollection dataset = new XYSeriesCollection();
             for (Integer depth : data.keySet()) {
-                XYSeries series = new XYSeries("depth = " + depth);
-                for (PairedList.Pair entry : data.get(depth).filter(1)) {
-                    if (entry.getK2() > 0) {
-                        series.add(nanosToSeconds(entry.getK1()), nanosToSeconds(entry.getK2()), false);
+                XYSeries series = new XYSeries("d(" + depth + ")");
+                for (PairedList.Pair entry : data.get(depth)) {
+                    double y = nanosToSeconds(entry.getK2());
+                    if (y > 0) {
+                        series.add(nanosToSeconds(entry.getK1()), y, false);
+                        rangeStatistics.addValue(y);
                     }
                 }
                 dataset.addSeries(series);
@@ -137,6 +142,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             rangeAxis.setMinorTickCount(10);
             rangeAxis.setMinorTickMarksVisible(true);
             rangeAxis.setBase(10);
+            rangeAxis.setLowerBound(rangeStatistics.getPercentile(1));
+            rangeAxis.setUpperBound(rangeStatistics.getPercentile(99));
 
             final DecimalFormatSymbols newSymbols = new DecimalFormatSymbols(Locale.GERMAN);
             newSymbols.setExponentSeparator("E");
