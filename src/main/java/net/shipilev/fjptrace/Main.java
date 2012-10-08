@@ -26,6 +26,7 @@ import net.shipilev.fjptrace.tasks.RenderWorkerQueueTask;
 import net.shipilev.fjptrace.tasks.ReadTask;
 import net.shipilev.fjptrace.tasks.RenderWorkerStateTask;
 import net.shipilev.fjptrace.tasks.TaskStatusTask;
+import net.shipilev.fjptrace.tasks.TraceBlockEstimatesTask;
 import net.shipilev.fjptrace.tasks.WorkerQueueStatusTask;
 import net.shipilev.fjptrace.tasks.WorkerStatusTask;
 
@@ -75,6 +76,8 @@ public class Main {
 
             CheckEventsTask checkEvents = new CheckEventsTask(events);
             PrintEventsTask printEventsTask = new PrintEventsTask(opts, events);
+            TraceBlockEstimatesTask traceEstimateTask = new TraceBlockEstimatesTask(events);
+            traceEstimateTask.fork();
             checkEvents.fork();
             printEventsTask.fork();
 
@@ -108,6 +111,7 @@ public class Main {
                 wqStatus = null;
             }
 
+            traceEstimateTask.join();
             checkEvents.join();
             printEventsTask.join();
 
