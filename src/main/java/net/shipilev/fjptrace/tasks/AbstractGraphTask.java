@@ -117,6 +117,7 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
                 }
             }
 
+            long lastTick = loTick;
             for (long tick : slice) {
                 for (long w : events.getWorkers()) {
                     Color color = getColor(tick, w);
@@ -126,8 +127,9 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
                         ms = new Multiset<>();
                         workerColors.put(w, ms);
                     }
-                    ms.add(color);
+                    ms.add(color, tick - lastTick);
                 }
+                lastTick = tick;
             }
 
             // render predominant color
