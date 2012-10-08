@@ -1032,6 +1032,8 @@ public class ForkJoinPool extends AbstractExecutorService {
                 U.unpark(p);
         }
 
+        static final int CHUNK_SIZE = 22;
+
         /**
          * Register local event, called by owner thread only
          */
@@ -1040,9 +1042,9 @@ public class ForkJoinPool extends AbstractExecutorService {
 
             long time = System.nanoTime();
 
-            final int CHUNK_SIZE = 22;
-            if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE > BUFFER_LIMIT)) {
-                flush(time);
+            if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
+                // reserved the slot for one additional event
+                time = flush(time);
             }
 
             // All glory to hypno-toad!
@@ -1057,15 +1059,21 @@ public class ForkJoinPool extends AbstractExecutorService {
         /**
          * Flushes the tracing buffer
          */
-        final void flush() {
-            flush(System.nanoTime());
+        final long flush() {
+            return flush(System.nanoTime());
         }
 
         /**
          * Flushes the tracing buffer and mark the current time
          */
-        final void flush(long time) {
+        final long flush(long time) {
             if (traceEventPos > 0) {
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
+                U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_BLOCK.ordinal());
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, TagGenerator.NULL_TASK_ID);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
+                traceEventPos += CHUNK_SIZE;
+
                 synchronized (pool.traceWriter) {
                     try {
                         pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
@@ -1073,9 +1081,23 @@ public class ForkJoinPool extends AbstractExecutorService {
                         // should never happen
                     }
                 }
+
+                time = System.nanoTime();
+                lastWrite = time;
+                traceEventPos = 0;
+
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
+                U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_UNBLOCK.ordinal());
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, TagGenerator.NULL_TASK_ID);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
+                traceEventPos += CHUNK_SIZE;
+
+                return time;
+            } else {
+                lastWrite = time;
+                traceEventPos = 0;
+                return time;
             }
-            lastWrite = time;
-            traceEventPos = 0;
         }
 
         // Unsafe mechanics

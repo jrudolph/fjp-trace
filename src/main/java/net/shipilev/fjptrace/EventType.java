@@ -67,4 +67,14 @@ public enum EventType {
      * Task was submitted.
      */
     SUBMIT,
+
+    /**
+     * Tracer is blocked (e.g. waiting for event dump)
+     */
+    TRACE_BLOCK,
+
+    /**
+     * Tracer is unblocked (e.g. waiting for event dump)
+     */
+    TRACE_UNBLOCK,
 }
