@@ -1042,7 +1042,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
             final int CHUNK_SIZE = 22;
             if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE > BUFFER_LIMIT)) {
-                flush();
+                flush(time);
             }
 
             // All glory to hypno-toad!
@@ -1058,6 +1058,13 @@ public class ForkJoinPool extends AbstractExecutorService {
          * Flushes the tracing buffer
          */
         final void flush() {
+            flush(System.nanoTime());
+        }
+
+        /**
+         * Flushes the tracing buffer and mark the current time
+         */
+        final void flush(long time) {
             if (traceEventPos > 0) {
                 synchronized (pool.traceWriter) {
                     try {
@@ -1067,7 +1074,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                     }
                 }
             }
-            lastWrite = System.nanoTime();
+            lastWrite = time;
             traceEventPos = 0;
         }
 
