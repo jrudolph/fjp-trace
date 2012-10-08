@@ -631,7 +631,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         volatile Thread parker;    // == owner during call to park; else null
         volatile ForkJoinTask<?> currentJoin;  // task being joined in awaitJoin
         ForkJoinTask<?> currentSteal; // current non-local task being executed
-        long lastWrite;
+        long nextWrite;
         final byte[] traceEventBuffer;
         int traceEventPos;
 
@@ -1042,7 +1042,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
             long time = System.nanoTime();
 
-            if (time - lastWrite > BUFFER_TIME || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
+            if (nextWrite < time || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
                 // reserved the slot for one additional event
                 time = flush(time);
             }
@@ -1083,7 +1083,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                 }
 
                 time = System.nanoTime();
-                lastWrite = time;
+                nextWrite = time + ThreadLocalRandom.current().nextLong(BUFFER_TIME, BUFFER_TIME*2);
                 traceEventPos = 0;
 
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
@@ -1094,8 +1094,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
                 return time;
             } else {
-                lastWrite = time;
-                traceEventPos = 0;
+                nextWrite = time + ThreadLocalRandom.current().nextLong(BUFFER_TIME, BUFFER_TIME*2);
                 return time;
             }
         }
