@@ -120,9 +120,12 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
 
             chart.setBackgroundPaint(Color.white);
 
+            int pointSize = (int) Math.max(10, Math.min(1, width * height / rangeStatistics.getN()));
+
             final XYPlot plot = chart.getXYPlot();
             XYDotRenderer renderer = new XYDotRenderer();
-            renderer.setDefaultEntityRadius(3);
+            renderer.setDotHeight(pointSize);
+            renderer.setDotWidth(pointSize);
             enforceSeriesPaint(renderer);
             plot.setRenderer(renderer);
 
