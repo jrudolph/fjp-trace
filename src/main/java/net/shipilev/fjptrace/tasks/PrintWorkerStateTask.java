@@ -37,11 +37,15 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
     private final Events events;
     private final WorkerStatus workerStatus;
     private final String filename;
+    private final long fromTime;
+    private final long toTime;
 
     public PrintWorkerStateTask(Options opts, Events events, WorkerStatus workerStatus) {
         super("Worker state trace");
         this.filename = opts.getTargetPrefix() + "-workerState.txt.gz";
         this.events = events;
+        this.fromTime = opts.getFromTime();
+        this.toTime = opts.getToTime();
         this.workerStatus = workerStatus;
     }
 
@@ -67,13 +71,11 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
         pw.println();
 
         for (Event e : list) {
-            if (count++ > linesToProcess) {
-                break;
-            }
+            if (e.time < fromTime) continue;
+            if (e.time > toTime) break;
 
-            if ((count & 0xFFFF) == 0) {
-                reportProgress(count*1.0 / list.size());
-            }
+            if (count++ > linesToProcess) break;
+            if ((count & 0xFFFF) == 0) reportProgress(count*1.0 / list.size());
 
             pw.format("%10d", TimeUnit.NANOSECONDS.toMillis(e.time));
 
