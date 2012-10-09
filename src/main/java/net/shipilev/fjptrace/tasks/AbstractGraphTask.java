@@ -53,6 +53,8 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
     protected final int W_WIDTH;
     protected final int P_WIDTH;
     protected final int D_WIDTH;
+    protected final long fromTime;
+    protected final long toTime;
 
     public AbstractGraphTask(Options opts, Events events, String name, String outFile) {
         super(name);
@@ -60,6 +62,8 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
         this.events = events;
         this.HEIGHT = opts.getHeight();
         this.WIDTH = opts.getWidth();
+        this.fromTime = opts.getFromTime();
+        this.toTime = opts.getToTime();
         this.H_HEIGHT = 200;
         this.D_HEIGHT = (HEIGHT - H_HEIGHT);
         this.T_WIDTH = (int) (WIDTH * 0.1);
@@ -94,6 +98,10 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, WIDTH, HEIGHT);
 
+
+        long from = Math.max(fromTime, events.getStart());
+        long to = Math.min(toTime, events.getEnd());
+
         Map<Long, Multiset<Color>> workerColors = new TreeMap<>();
 
         for (int yTick = 0; yTick < D_HEIGHT; yTick++) {
@@ -103,8 +111,8 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
 
             int cY = H_HEIGHT + yTick;
 
-            long loTick = (long) ((1.0 * (yTick-1) / D_HEIGHT) * (events.getEnd() - events.getStart()) + events.getStart());
-            long hiTick = (long) ((1.0 * (yTick) / D_HEIGHT) * (events.getEnd() - events.getStart()) + events.getStart());
+            long loTick = (long) ((1.0 * (yTick-1) / D_HEIGHT) * (to - from) + from);
+            long hiTick = (long) ((1.0 * (yTick) / D_HEIGHT) * (to - from) + from);
 
             Collection<Long> slice = times.tailSet(loTick).headSet(hiTick);
 
@@ -162,13 +170,13 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
          * Render timeline
          */
 
-        long period = events.getEnd() - events.getStart();
+        long period = to - from;
         long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
 
         g.setColor(Color.BLACK);
 
-        for (long tick = events.getStart(); tick < events.getEnd(); tick += step) {
-            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - events.getStart()) / (events.getEnd() - events.getStart()));
+        for (long tick = from; tick < to; tick += step) {
+            int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - from) / (to - from));
             g.drawLine(10, cY, T_WIDTH, cY);
             g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick)), 10, cY - 3);
         }

@@ -22,6 +22,7 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 public class Options {
     private String source;
@@ -31,6 +32,8 @@ public class Options {
     private int height;
     private int width;
     private String targetPrefix;
+    private long from;
+    private long to;
 
     public Options(String[] args) {
         this.args = args;
@@ -51,6 +54,12 @@ public class Options {
 
         OptionSpec<Integer> offset = parser.accepts("offset", "Skip N events in trace file")
                 .withRequiredArg().ofType(int.class).describedAs("N").defaultsTo(0);
+
+        OptionSpec<Integer> from = parser.accepts("fromTime", "Time range, low bound")
+                .withRequiredArg().ofType(int.class).describedAs("ms").defaultsTo(0);
+
+        OptionSpec<Integer> to = parser.accepts("toTime", "Time range, high bound")
+                .withRequiredArg().ofType(int.class).describedAs("ms").defaultsTo(Integer.MAX_VALUE);
 
         OptionSpec<Integer> height = parser.accepts("height", "Image height")
                 .withRequiredArg().ofType(int.class).describedAs("px").defaultsTo(2000);
@@ -80,6 +89,8 @@ public class Options {
         this.offset = set.valueOf(offset);
         this.height = set.valueOf(height);
         this.width = set.valueOf(width);
+        this.from = TimeUnit.MILLISECONDS.toNanos(set.valueOf(from));
+        this.to = TimeUnit.MILLISECONDS.toNanos(set.valueOf(to));
 
         if (!set.has(target)) {
             this.targetPrefix = set.valueOf(source);
@@ -112,6 +123,14 @@ public class Options {
 
     public int getWidth() {
         return width;
+    }
+
+    public long getFromTime() {
+        return from;
+    }
+
+    public long getToTime() {
+        return to;
     }
 
 }

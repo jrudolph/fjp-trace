@@ -55,11 +55,15 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
     private final int width;
     private final int height;
     private final String prefix;
+    private final long fromTime;
+    private final long toTime;
 
     public RenderTaskExecTimeTask(Options opts, Events events, TaskStatus taskStatus) {
         this.width = opts.getWidth();
         this.height = opts.getHeight();
         this.prefix = opts.getTargetPrefix();
+        this.fromTime = opts.getFromTime();
+        this.toTime = opts.getToTime();
         this.events = events;
         this.taskStatus = taskStatus;
     }
@@ -133,8 +137,8 @@ public class RenderTaskExecTimeTask extends RecursiveAction {
             domainAxis.setLowerMargin(0.0);
             domainAxis.setUpperMargin(0.0);
             domainAxis.setInverted(true);
-            domainAxis.setLowerBound(nanosToSeconds(events.getStart()));
-            domainAxis.setUpperBound(nanosToSeconds(events.getEnd()));
+            domainAxis.setLowerBound(nanosToSeconds(Math.max(fromTime, events.getStart())));
+            domainAxis.setUpperBound(nanosToSeconds(Math.min(toTime, events.getEnd())));
 
             final LogAxis rangeAxis = new LogAxis(yLabel);
             rangeAxis.setTickMarkPaint(Color.white);
