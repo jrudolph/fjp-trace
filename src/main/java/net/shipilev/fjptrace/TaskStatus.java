@@ -78,8 +78,6 @@ public class TaskStatus {
             pairs.add(t.getTime(), t.getTotalTime());
         }
 
-        System.err.println("DEPTH = " + depthLists.size());
-
         return depthLists;
     }
 
