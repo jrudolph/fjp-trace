@@ -93,6 +93,15 @@ public class Events implements Iterable<Event> {
         events.clear();
         events.addAll(newEvents);
 
+        long basetime = Long.MAX_VALUE;
+        for (Event event : events) {
+            basetime = Math.min(event.time, basetime);
+        }
+
+        for (Event event : events) {
+            event.time -= basetime;
+        }
+
         System.out.println(events.size() + " events after cutoff");
 
         start = events.get(0).time;
@@ -110,12 +119,6 @@ public class Events implements Iterable<Event> {
 
     public long getEnd() {
         return end;
-    }
-
-    public void setBasetime(long basetime) {
-        for (Event event : events) {
-            event.time -= basetime;
-        }
     }
 
     public Collection<Long> getWorkers() {

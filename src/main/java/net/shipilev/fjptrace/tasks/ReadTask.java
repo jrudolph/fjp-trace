@@ -158,8 +158,6 @@ public class ReadTask extends LoggedRecursiveTask<Events> {
             aCount++;
         }
         is2.close();
-
-        events.setBasetime(minTime);
         events.seal();
 
         return events;
