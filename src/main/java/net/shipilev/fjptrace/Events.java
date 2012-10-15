@@ -18,6 +18,7 @@ package net.shipilev.fjptrace;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,9 +63,10 @@ public class Events implements Iterable<Event> {
         }
 
         // filter out submitters
+        EnumSet<EventType> infraEvents = EnumSet.of(EventType.SUBMIT, EventType.TRACE_UNBLOCK, EventType.TRACE_BLOCK);
         Set<Long> onlySubmissionWorkers = new HashSet<>(workers);
         for (Event e : events) {
-            if (e.eventType != EventType.SUBMIT) {
+            if (!infraEvents.contains(e.eventType)) {
                 onlySubmissionWorkers.remove(e.workerId);
             }
         }
