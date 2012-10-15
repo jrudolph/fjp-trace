@@ -178,7 +178,7 @@ public abstract class AbstractGraphTask extends LoggedRecursiveAction {
         for (long tick = from; tick < to; tick += step) {
             int cY = H_HEIGHT + (int) (D_HEIGHT * (tick - from) / (to - from));
             g.drawLine(10, cY, T_WIDTH, cY);
-            g.drawString(String.format("%d ms", TimeUnit.NANOSECONDS.toMillis(tick)), 10, cY - 3);
+            g.drawString(String.format("%d us", TimeUnit.NANOSECONDS.toMicros(tick)), 10, cY - 3);
         }
 
         /**
