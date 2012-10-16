@@ -66,8 +66,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     private static final int PAD_BOTTOM = 50;
 
     // transient
-    private long minTime;
-    private long maxTime;
     private Map<Long,Integer> workerId;
 
     public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
@@ -154,21 +152,13 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             }
         }
 
-        // figure out min and max time
-        minTime = Long.MAX_VALUE;
-        maxTime = Long.MIN_VALUE;
-        for (Event e : allEvents) {
-            minTime = Math.min(minTime, e.time);
-            maxTime = Math.max(maxTime, e.time);
-        }
-
         render(allEvents, subEvents);
     }
 
     private Point map(Event e) {
         return new Point(
                 PAD_LEFT + ((width - (PAD_RIGHT + PAD_LEFT)) * workerId.get(e.workerId) / workerId.size()),
-                PAD_TOP + (int)((height - (PAD_TOP + PAD_BOTTOM)) * (e.time - minTime) / (maxTime - minTime))
+                PAD_TOP + (int)((height - (PAD_TOP + PAD_BOTTOM)) * (e.time - fromTime) / (toTime - fromTime))
                 );
     }
 
@@ -239,14 +229,14 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         }
 
         // time scale
-        long period = maxTime - minTime;
+        long period = toTime - fromTime;
         long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
-        long start = (minTime / step) * step;
+        long start = (fromTime / step) * step;
 
         g.setColor(Color.BLACK);
 
-        for (long tick = start; tick < maxTime; tick += step) {
-            int cY = PAD_TOP + (int) ((height - (PAD_TOP + PAD_BOTTOM)) * (tick - minTime) / (maxTime - minTime));
+        for (long tick = start; tick < toTime; tick += step) {
+            int cY = PAD_TOP + (int) ((height - (PAD_TOP + PAD_BOTTOM)) * (tick - fromTime) / (toTime - fromTime));
             g.drawLine(10, cY, width - (PAD_RIGHT), cY);
             g.drawString(String.format("%d us", TimeUnit.NANOSECONDS.toMicros(tick)), 10, cY - 3);
         }
