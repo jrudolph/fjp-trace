@@ -61,11 +61,11 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print task subtrees");
         this.fileNamePng = opts.getTargetPrefix() + "-subtrees.png";
-        this.fromTime = opts.getFromTime();
-        this.toTime = opts.getToTime();
+        this.events = events;
+        this.fromTime = Math.max(events.getStart(), opts.getFromTime());
+        this.toTime = Math.min(events.getEnd(), opts.getToTime());
         this.width = opts.getWidth();
         this.height = opts.getHeight();
-        this.events = events;
         this.subgraphs = subgraphs;
     }
 
@@ -133,8 +133,8 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         // enumerate workers
         workerId = new HashMap<>();
         {
-            workerId.put(-1L, -1);
-            int id = 0;
+            workerId.put(-1L, 0);
+            int id = 1;
             for (Long w : events.getWorkers()) {
                 workerId.put(w, id++);
             }
