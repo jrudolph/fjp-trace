@@ -189,30 +189,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             }
         }
 
-        // Inter-thread edges:
-        //   SUBMIT -> EXEC
-        //     FORK -> EXEC
-        //     EXECED -> JOINED
-        for (Integer id : tasks.keySet()) {
-            List<Event> list = tasks.get(id);
-
-            Multimap<EventType, Event> byType = new Multimap<>();
-            for (Event e : list) {
-                byType.put(e.eventType, e);
-            }
-
-            edges.addAll(product(byType.get(EventType.SUBMIT), byType.get(EventType.EXEC)));
-            edges.addAll(product(byType.get(EventType.FORK), byType.get(EventType.EXEC)));
-            edges.addAll(product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED)));
-        }
-
-        // output .dot
-        pw.println("digraph {");
-        for (Pair<Event, Event> pair : edges) {
-            pw.println(" " + pair.t1.shortID() + " -> " + pair.t2.shortID() + " [timeDiff = " + (pair.t2.time - pair.t1.time) + "];");
-        }
-        pw.println("}");
-
         // render graph: prepare canvas
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
@@ -231,12 +207,38 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         }
 
         // render graph: edges
-        for (Pair<Event, Event> pair : edges) {
-            Point p1 = map(pair.t1);
-            Point p2 = map(pair.t2);
+        // Inter-thread edges:
+        //   SUBMIT -> EXEC
+        //     FORK -> EXEC
+        //     EXECED -> JOINED
+        for (Integer id : tasks.keySet()) {
+            List<Event> list = tasks.get(id);
 
-            g.setColor(Color.GREEN);
-            g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            Multimap<EventType, Event> byType = new Multimap<>();
+            for (Event e : list) {
+                byType.put(e.eventType, e);
+            }
+
+            for (Pair<Event, Event> pair : product(byType.get(EventType.SUBMIT), byType.get(EventType.EXEC))) {
+                Point p1 = map(pair.t1);
+                Point p2 = map(pair.t2);
+                g.setColor(Color.BLUE);
+                g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            }
+
+            for (Pair<Event, Event> pair : product(byType.get(EventType.FORK), byType.get(EventType.EXEC))) {
+                Point p1 = map(pair.t1);
+                Point p2 = map(pair.t2);
+                g.setColor(Color.GREEN);
+                g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            }
+
+            for (Pair<Event, Event> pair : product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED))) {
+                Point p1 = map(pair.t1);
+                Point p2 = map(pair.t2);
+                g.setColor(Color.RED);
+                g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            }
         }
 
         ImageIO.write(image, "png", new File(fileNamePng));
