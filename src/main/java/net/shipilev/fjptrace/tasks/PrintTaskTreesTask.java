@@ -165,28 +165,10 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private void render(PrintWriter pw, Collection<Event> events) throws IOException {
 
-
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
         for (Event e : events) {
             tasks.put(e.taskTag, e);
-        }
-
-        // figure out the edges
-
-        List<Pair<Event, Event>> edges = new ArrayList<>();
-
-        // Intra-thread edges
-        for (Long w : workerId.keySet()) {
-            Event lastEvent = null;
-            for (Event e : events) {
-                if (w == e.workerId) {
-                    if (lastEvent != null) {
-                        edges.add(new Pair<>(lastEvent, e));
-                    }
-                    lastEvent = e;
-                }
-            }
         }
 
         // render graph: prepare canvas
@@ -197,14 +179,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, width, height);
-
-
-        // render graph: nodes
-        for (Event e : events) {
-            Point p = map(e);
-            g.setColor(Color.BLACK);
-            g.fillRect(p.x, p.y, 3, 3);
-        }
 
         // render graph: edges
         // Inter-thread edges:
@@ -239,6 +213,29 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 g.setColor(Color.RED);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
+        }
+
+        // Intra-thread edges
+        for (Long w : workerId.keySet()) {
+            Event lastEvent = null;
+            for (Event e : events) {
+                if (w == e.workerId) {
+                    if (lastEvent != null) {
+                        Point p1 = map(lastEvent);
+                        Point p2 = map(e);
+                        g.setColor(Color.LIGHT_GRAY);
+                        g.drawLine(p1.x, p1.y, p2.x, p2.y);
+                    }
+                    lastEvent = e;
+                }
+            }
+        }
+
+        // render graph: nodes
+        for (Event e : events) {
+            Point p = map(e);
+            g.setColor(Color.BLACK);
+            g.fillRect(p.x - 2, p.y - 2, 4, 4);
         }
 
         ImageIO.write(image, "png", new File(fileNamePng));
