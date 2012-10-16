@@ -56,6 +56,9 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     private final int width;
     private final int height;
 
+    private static final int PAD_X = 100;
+    private static final int PAD_Y = 100;
+
     // transient
     private long minTime;
     private long maxTime;
@@ -158,8 +161,8 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private Point map(Event e) {
         return new Point(
-                (width * workerId.get(e.workerId) / workerId.size()),
-                (int)(height * (e.time - minTime) / (maxTime - minTime))
+                PAD_X/2 + ((width - PAD_X) * workerId.get(e.workerId) / workerId.size()),
+                PAD_Y/2 + (int)((height - PAD_Y) * (e.time - minTime) / (maxTime - minTime))
                 );
     }
 
