@@ -40,7 +40,10 @@ Most of the graphs are showing the progress in time.
      should not be) used in conjunction with appropriate chemical agents to bring
      the unforgettable experience.
 
- 7. *-summary.txt: summary statistics for tasks executed
+ 7. *-subgraphs.png: the decomposition trees in more detail, down to individual traces.
+     You might find more convenient to focus on specific parts with time range.
+
+ 8. *-summary.txt: summary statistics for tasks executed
 
 If there is something else sorely needed, don't hesitate to raise the issue.
 
