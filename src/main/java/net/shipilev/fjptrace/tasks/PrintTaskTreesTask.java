@@ -59,7 +59,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private static final int PAD_LEFT = 150;
     private static final int PAD_RIGHT = 50;
-    private static final int PAD_TOP = 400;
+    private static final int PAD_TOP = 100;
     private static final int PAD_BOTTOM = 50;
 
     // transient
