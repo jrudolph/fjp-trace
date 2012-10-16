@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPOutputStream;
 
 public class PrintWorkerStateTask extends LoggedRecursiveAction {
 

@@ -18,6 +18,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.QueueStatus;
 import net.shipilev.fjptrace.util.Multiset;
 
@@ -29,10 +30,12 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
     public static final long SUBMISSION_WORKER = -1;
 
     private final Events events;
+    private final boolean shouldFix;
 
-    public WorkerQueueStatusTask(Events events) {
+    public WorkerQueueStatusTask(Options opts, Events events) {
         super("Inferring queue stats");
         this.events = events;
+        this.shouldFix = opts.isShouldFix();
     }
 
     @Override
@@ -87,7 +90,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 }
 
                 case PARK:
-                    if (e.taskTag <= 0) {
+                    if (shouldFix) {
                         if (currentCount.count(e.workerId) != 0) {
                             getPw().println("WARNING: parking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);
@@ -96,8 +99,8 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                     }
                     break;
 
-                case UNPARK:
-                    if (e.taskTag <= 0) {
+                case UNPARKED:
+                    if (shouldFix) {
                         if (currentCount.count(e.workerId) != 0) {
                             getPw().println("WARNING: unparking idle thread, but analyzer thinks it's workqueue is not empty, resetting queue");
                             currentCount.removeKey(e.workerId);

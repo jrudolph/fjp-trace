@@ -59,9 +59,24 @@ public enum EventType {
     PARK,
 
     /**
-     * Worker had just unparked.
+     * Worker to be unparked.
      */
     UNPARK,
+
+    /**
+     * Worker had just unparked.
+     */
+    UNPARKED,
+
+    /**
+     * Worker to start waiting
+     */
+    WAIT,
+
+    /**
+     * Worker had completed waiting
+     */
+    WAITED,
 
     /**
      * Task was submitted.

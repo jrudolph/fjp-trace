@@ -671,7 +671,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
     private void registerEvent(EventType event) {
         Thread caller = Thread.currentThread();
         if (caller instanceof ForkJoinWorkerThread) {
-            ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, this);
+            ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, traceTag);
         }
     }
 

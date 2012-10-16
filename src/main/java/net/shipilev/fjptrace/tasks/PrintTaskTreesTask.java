@@ -20,23 +20,15 @@ import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.EventType;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
-import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskStatus;
-import net.shipilev.fjptrace.WorkerStatusBL;
-import net.shipilev.fjptrace.WorkerStatusJN;
-import net.shipilev.fjptrace.WorkerStatusPK;
 import net.shipilev.fjptrace.util.Multimap;
-import net.shipilev.fjptrace.util.PairedList;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import sun.font.Type1Font;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,8 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class PrintTaskTreesTask extends LoggedRecursiveAction {

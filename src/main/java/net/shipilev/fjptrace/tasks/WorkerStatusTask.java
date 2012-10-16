@@ -18,6 +18,7 @@ package net.shipilev.fjptrace.tasks;
 
 import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.Events;
+import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.WorkerStatus;
 import net.shipilev.fjptrace.WorkerStatusBL;
 import net.shipilev.fjptrace.WorkerStatusJN;
@@ -26,10 +27,12 @@ import net.shipilev.fjptrace.WorkerStatusPK;
 public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
 
     private final Events events;
+    private final boolean shouldFix;
 
-    public WorkerStatusTask(Events events) {
+    public WorkerStatusTask(Options opts, Events events) {
         super("Computing worker status");
         this.events = events;
+        shouldFix = opts.isShouldFix();
     }
 
     @Override
@@ -59,8 +62,16 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         }
                         break;
 
+                    case WAIT:
+                        workerStatus.add(e.time, w, WorkerStatusPK.PARKED);
+                        break;
+
+                    case WAITED:
+                        workerStatus.add(e.time, w, WorkerStatusPK.ACTIVE);
+                        break;
+
                     case PARK:
-                        if (e.taskTag <= 0) {
+                        if (shouldFix) {
                             if (execDepth != 0) {
                                 getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;
@@ -75,8 +86,8 @@ public class WorkerStatusTask extends LoggedRecursiveTask<WorkerStatus> {
                         workerStatus.add(e.time, w, WorkerStatusPK.PARKED);
                         break;
 
-                    case UNPARK:
-                        if (e.taskTag <= 0) {
+                    case UNPARKED:
+                        if (shouldFix) {
                             if (execDepth != 0) {
                                 getPw().println("WARNING: parking idle thread, but analyzer thinks it executes the task, resetting exec depth");
                                 execDepth = 0;

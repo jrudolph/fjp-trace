@@ -34,6 +34,7 @@ public class Options {
     private String targetPrefix;
     private long from;
     private long to;
+    private boolean shouldFix;
 
     public Options(String[] args) {
         this.args = args;
@@ -67,6 +68,9 @@ public class Options {
         OptionSpec<Integer> width = parser.accepts("width", "Image width")
                 .withRequiredArg().ofType(int.class).describedAs("px").defaultsTo(1000);
 
+        OptionSpec<Boolean> fixup = parser.accepts("fix", "Try to fix broken file")
+                .withRequiredArg().ofType(boolean.class).defaultsTo(false);
+
         parser.accepts("h", "Print this help");
 
         OptionSet set;
@@ -89,6 +93,7 @@ public class Options {
         this.offset = set.valueOf(offset);
         this.height = set.valueOf(height);
         this.width = set.valueOf(width);
+        this.shouldFix = set.valueOf(fixup);
         this.from = TimeUnit.MICROSECONDS.toNanos(set.valueOf(from));
         this.to = TimeUnit.MICROSECONDS.toNanos(set.valueOf(to));
 
@@ -133,4 +138,7 @@ public class Options {
         return to;
     }
 
+    public boolean isShouldFix() {
+        return shouldFix;
+    }
 }

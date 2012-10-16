@@ -714,7 +714,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                         U.putObject(a, (long)j, task);    // don't need "ordered"
                         top = s + 1;
                         submitted = true;
-                        registerEvent(EventType.SUBMIT, task);
+                        registerEvent(EventType.SUBMIT, task.traceTag);
                     }
                 } finally {
                     runState = 0;                         // unlock
@@ -1037,7 +1037,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         /**
          * Register local event, called by owner thread only
          */
-        final void registerEvent(EventType event, ForkJoinTask<?> task) {
+        final void registerEvent(EventType event, int tag) {
             if (!TRACE) return;
 
             long time = System.nanoTime();
@@ -1050,8 +1050,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             // All glory to hypno-toad!
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
             U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
-            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10,
-                    (task == null) ? TagGenerator.NULL_TASK_ID : task.traceTag);
+            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, tag);
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
             traceEventPos += CHUNK_SIZE;
         }
@@ -1123,10 +1122,10 @@ public class ForkJoinPool extends AbstractExecutorService {
         }
     }
 
-    protected void registerEvent(EventType event, ForkJoinTask<?> task) {
+    protected void registerEvent(EventType event, int traceTag) {
         Thread caller = Thread.currentThread();
         if (caller instanceof ForkJoinWorkerThread)
-            ((ForkJoinWorkerThread)caller).workQueue.registerEvent(event, task);
+            ((ForkJoinWorkerThread)caller).workQueue.registerEvent(event, traceTag);
     }
 
     /**
@@ -1546,8 +1545,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                                ((long)(u + UAC_UNIT) << 32));
                     if (U.compareAndSwapLong(this, CTL, c, nc)) {
                         w.eventCount = (e + E_SEQ) & E_MASK;
-                        if ((p = w.parker) != null)
+                        if ((p = w.parker) != null) {
+                            registerEvent(EventType.UNPARKED, (int)p.getId());
                             U.unpark(p);                // activate and release
+                        }
                         break;
                     }
                 }
@@ -1574,7 +1575,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     final void runWorker(WorkQueue w) {
         w.growArray(false);         // initialize queue array in this thread
-        w.registerEvent(EventType.UNPARK, null);
+        w.registerEvent(EventType.UNPARKED, (int)Thread.currentThread().getId());
         do { w.runTask(scan(w)); } while (w.runState >= 0);
     }
 
@@ -1689,12 +1690,12 @@ public class ForkJoinPool extends AbstractExecutorService {
                 else {
                     Thread.interrupted();     // clear status
                     Thread wt = Thread.currentThread();
-                    registerEvent(EventType.PARK, null);
+                    registerEvent(EventType.PARK, (int)wt.getId());
                     U.putObject(wt, PARKBLOCKER, this);
                     w.parker = wt;            // emulate LockSupport.park
                     if (w.eventCount < 0)     // recheck
                         U.park(false, 0L);
-                    registerEvent(EventType.UNPARK, null);
+                    registerEvent(EventType.UNPARKED, (int)wt.getId());
                     w.parker = null;
                     U.putObject(wt, PARKBLOCKER, null);
                 }
@@ -1725,10 +1726,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                 Thread.interrupted();  // timed variant of version in scan()
                 U.putObject(wt, PARKBLOCKER, this);
                 w.parker = wt;
-                registerEvent(EventType.PARK, null);
+                registerEvent(EventType.PARK, (int)wt.getId());
                 if (ctl == currentCtl)
                     U.park(false, SHRINK_RATE);
-                registerEvent(EventType.UNPARK, null);
+                registerEvent(EventType.UNPARKED, (int)wt.getId());
                 w.parker = null;
                 U.putObject(wt, PARKBLOCKER, null);
                 if (ctl != currentCtl)
@@ -1948,12 +1949,12 @@ public class ForkJoinPool extends AbstractExecutorService {
                         if (task.trySetSignal()) {
                             synchronized (task) {
                                 if (task.status >= 0) {
-                                    registerEvent(EventType.PARK, task);
+                                    registerEvent(EventType.WAIT, task.traceTag);
                                     try {                // see ForkJoinTask
                                         task.wait();     //  for explanation
                                     } catch (InterruptedException ie) {
                                     }
-                                    registerEvent(EventType.UNPARK, task);
+                                    registerEvent(EventType.WAITED, task.traceTag);
                                 }
                                 else
                                     task.notifyAll();
