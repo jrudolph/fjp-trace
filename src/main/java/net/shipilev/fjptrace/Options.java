@@ -56,10 +56,10 @@ public class Options {
                 .withRequiredArg().ofType(int.class).describedAs("N").defaultsTo(0);
 
         OptionSpec<Integer> from = parser.accepts("fromTime", "Time range, low bound")
-                .withRequiredArg().ofType(int.class).describedAs("ms").defaultsTo(0);
+                .withRequiredArg().ofType(int.class).describedAs("us").defaultsTo(0);
 
         OptionSpec<Integer> to = parser.accepts("toTime", "Time range, high bound")
-                .withRequiredArg().ofType(int.class).describedAs("ms").defaultsTo(Integer.MAX_VALUE);
+                .withRequiredArg().ofType(int.class).describedAs("us").defaultsTo(Integer.MAX_VALUE);
 
         OptionSpec<Integer> height = parser.accepts("height", "Image height")
                 .withRequiredArg().ofType(int.class).describedAs("px").defaultsTo(2000);
@@ -89,8 +89,8 @@ public class Options {
         this.offset = set.valueOf(offset);
         this.height = set.valueOf(height);
         this.width = set.valueOf(width);
-        this.from = TimeUnit.MILLISECONDS.toNanos(set.valueOf(from));
-        this.to = TimeUnit.MILLISECONDS.toNanos(set.valueOf(to));
+        this.from = TimeUnit.MICROSECONDS.toNanos(set.valueOf(from));
+        this.to = TimeUnit.MICROSECONDS.toNanos(set.valueOf(to));
 
         if (!set.has(target)) {
             this.targetPrefix = set.valueOf(source);
