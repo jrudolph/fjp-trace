@@ -100,6 +100,9 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             }
         }
 
+        List<Event> allEvents = new ArrayList<>();
+        Multimap<Task, Event> subEvents = new Multimap<>();
+
         for (Task t : interestingParents) {
 
             // compute transitive closure
@@ -126,37 +129,40 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
             }
 
-            // emit graph info
-
-            Collections.sort(events, new Comparator<Event>() {
-                @Override
-                public int compare(Event o1, Event o2) {
-                    return Long.compare(o1.time, o2.time);
-                }
-            });
-
-            // enumerate workers
-            Set<Long> workers = new HashSet<>();
-            workerId = new HashMap<>();
-            {
-                int id = 0;
-                for (Event e : events) {
-                    if (workers.add(e.workerId)) {
-                        workerId.put(e.workerId, id++);
-                    }
-                }
-            }
-
-            // figure out min and max time
-            minTime = Long.MAX_VALUE;
-            maxTime = Long.MIN_VALUE;
-            for (Event e : events) {
-                minTime = Math.min(minTime, e.time);
-                maxTime = Math.max(maxTime, e.time);
-            }
-
-            render(pw, events);
+            allEvents.addAll(events);
+            subEvents.putAll(t, events);
         }
+
+        // emit graph info
+
+        Collections.sort(allEvents, new Comparator<Event>() {
+            @Override
+            public int compare(Event o1, Event o2) {
+                return Long.compare(o1.time, o2.time);
+            }
+        });
+
+        // enumerate workers
+        Set<Long> workers = new HashSet<>();
+        workerId = new HashMap<>();
+        {
+            int id = 0;
+            for (Event e : allEvents) {
+                if (workers.add(e.workerId)) {
+                    workerId.put(e.workerId, id++);
+                }
+            }
+        }
+
+        // figure out min and max time
+        minTime = Long.MAX_VALUE;
+        maxTime = Long.MIN_VALUE;
+        for (Event e : allEvents) {
+            minTime = Math.min(minTime, e.time);
+            maxTime = Math.max(maxTime, e.time);
+        }
+
+        render(pw, allEvents, subEvents);
 
         pw.flush();
         pw.close();
@@ -169,7 +175,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 );
     }
 
-    private void render(PrintWriter pw, Collection<Event> events) throws IOException {
+    private void render(PrintWriter pw, Collection<Event> events, Multimap<Task, Event> subEvents) throws IOException {
 
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
@@ -222,17 +228,20 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         }
 
         // Intra-thread edges
-        for (Long w : workerId.keySet()) {
-            Event lastEvent = null;
-            for (Event e : events) {
-                if (w == e.workerId) {
-                    if (lastEvent != null) {
-                        Point p1 = map(lastEvent);
-                        Point p2 = map(e);
-                        g.setColor(Color.LIGHT_GRAY);
-                        g.drawLine(p1.x, p1.y, p2.x, p2.y);
+        for (Task p : subEvents.keySet()) {
+            List<Event> se = subEvents.get(p);
+            for (Long w : workerId.keySet()) {
+                Event lastEvent = null;
+                for (Event e : se) {
+                    if (w == e.workerId) {
+                        if (lastEvent != null && (lastEvent.eventType != EventType.PARK)) {
+                            Point p1 = map(lastEvent);
+                            Point p2 = map(e);
+                            g.setColor(Color.LIGHT_GRAY);
+                            g.drawLine(p1.x, p1.y, p2.x, p2.y);
+                        }
+                        lastEvent = e;
                     }
-                    lastEvent = e;
                 }
             }
         }

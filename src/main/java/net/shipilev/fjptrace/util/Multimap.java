@@ -16,6 +16,9 @@
 
 package net.shipilev.fjptrace.util;
 
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Task;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,5 +56,14 @@ public class Multimap<K, V> {
 
     public void clear() {
         map.clear();
+    }
+
+    public void putAll(K k, List<V> vs) {
+        List<V> list = map.get(k);
+        if (list == null) {
+            list = new ArrayList<>();
+            map.put(k, list);
+        }
+        list.addAll(vs);
     }
 }
