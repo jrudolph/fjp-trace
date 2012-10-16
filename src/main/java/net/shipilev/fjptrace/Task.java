@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class Task {
-    private final List<Task> children = new ArrayList<>();
+    private final List<Task> children;
+    private final List<Event> events;
     private final int taskTag;
+
     private volatile int depth;
     private long time;
     private long selfTime;
@@ -15,8 +17,10 @@ public class Task {
     private long worker;
 
     public Task(int taskTag) {
+        this.events = new ArrayList<>();
         this.taskTag = taskTag;
         this.depth = -1;
+        children = new ArrayList<>();
     }
 
     public void addChild(Task child) {
@@ -86,5 +90,13 @@ public class Task {
 
     public long getWorker() {
         return worker;
+    }
+
+    public void recordEvent(Event e) {
+        events.add(e);
+    }
+
+    public List<Event> getEvents() {
+        return events;
     }
 }

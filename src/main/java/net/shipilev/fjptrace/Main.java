@@ -89,7 +89,7 @@ public class Main {
                         new RenderExternalTaskColoringTask(opts, events, tStatus.join()),
                         new RenderTaskExecTimeTask(opts, events, tStatus.join()),
                         new PrintSummaryTask(opts, tStatus.join()),
-                        new PrintTaskTreesTask(opts, tStatus.join())
+                        new PrintTaskTreesTask(opts, events, tStatus.join())
                         );
                 tStatus = null;
             }

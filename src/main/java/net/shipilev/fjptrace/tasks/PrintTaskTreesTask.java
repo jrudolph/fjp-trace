@@ -16,6 +16,8 @@
 
 package net.shipilev.fjptrace.tasks;
 
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskStatus;
@@ -34,10 +36,16 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private final TaskStatus subgraphs;
     private final String fileName;
+    private final Events events;
+    private final long fromTime;
+    private final long toTime;
 
-    public PrintTaskTreesTask(Options opts, TaskStatus subgraphs) {
+    public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print task subtrees");
         this.fileName = opts.getTargetPrefix() + "-subtrees.txt";
+        this.fromTime = opts.getFromTime();
+        this.toTime = opts.getToTime();
+        this.events = events;
         this.subgraphs = subgraphs;
     }
 
@@ -47,7 +55,22 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
         PrintWriter pw = new PrintWriter(fileName);
 
+        // only record the events for the interesting region
+        for (Event e : events) {
+            if (e.time < fromTime) continue;
+            if (e.time > toTime) break;
+            subgraphs.recordEvent(e);
+        }
+
+        // only care about the parents in the interesting region
+        Collection<Task> interestingParents = new ArrayList<>();
         for (Task t : subgraphs.getParents()) {
+            if (fromTime < t.getTime() && t.getTime() < toTime) {
+                interestingParents.add(t);
+            }
+        }
+
+        for (Task t : interestingParents) {
 
             // compute transitive closure
 
@@ -55,26 +78,31 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             List<Task> prev = new ArrayList<>();
             List<Task> cur = new ArrayList<>();
 
+            List<Event> events = new ArrayList<>();
+
             cur.add(t);
             while (visited.addAll(cur)) {
                 prev.clear();
                 prev.addAll(cur);
                 cur.clear();
 
-                Set<Long> layerWorkers = new HashSet<>();
-
                 for (Task c : prev) {
                     Collection<Task> children = c.getChildren();
                     if (!children.isEmpty()) {
                         cur.addAll(children);
                     }
-
-                    layerWorkers.add(c.getWorker());
+                    events.addAll(c.getEvents());
                 }
+
             }
 
-        }
+            pw.println("Events for parent " + t);
+            for (Event e : events) {
+                pw.println(e);
+            }
 
+
+        }
 
         pw.flush();
         pw.close();

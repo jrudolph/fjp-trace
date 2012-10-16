@@ -157,4 +157,8 @@ public class TaskStatus {
         return tasks.get(taskTag);
     }
 
+    public void recordEvent(Event e) {
+        newTask(e.taskTag).recordEvent(e);
+    }
+
 }
