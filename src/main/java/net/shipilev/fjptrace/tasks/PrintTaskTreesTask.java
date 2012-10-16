@@ -141,14 +141,12 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         });
 
         // enumerate workers
-        Set<Long> workers = new HashSet<>();
         workerId = new HashMap<>();
         {
+            workerId.put(-1L, -1);
             int id = 0;
-            for (Event e : allEvents) {
-                if (workers.add(e.workerId)) {
-                    workerId.put(e.workerId, id++);
-                }
+            for (Long w : events.getWorkers()) {
+                workerId.put(w, id++);
             }
         }
 
