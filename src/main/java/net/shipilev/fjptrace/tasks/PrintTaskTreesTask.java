@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
@@ -56,8 +57,10 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     private final int width;
     private final int height;
 
-    private static final int PAD_X = 100;
-    private static final int PAD_Y = 100;
+    private static final int PAD_LEFT = 150;
+    private static final int PAD_RIGHT = 50;
+    private static final int PAD_TOP = 400;
+    private static final int PAD_BOTTOM = 50;
 
     // transient
     private long minTime;
@@ -161,8 +164,8 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private Point map(Event e) {
         return new Point(
-                PAD_X/2 + ((width - PAD_X) * workerId.get(e.workerId) / workerId.size()),
-                PAD_Y/2 + (int)((height - PAD_Y) * (e.time - minTime) / (maxTime - minTime))
+                PAD_LEFT + ((width - (PAD_RIGHT + PAD_LEFT)) * workerId.get(e.workerId) / workerId.size()),
+                PAD_TOP + (int)((height - (PAD_TOP + PAD_BOTTOM)) * (e.time - minTime) / (maxTime - minTime))
                 );
     }
 
@@ -239,6 +242,18 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             Point p = map(e);
             g.setColor(Color.BLACK);
             g.fillRect(p.x - 2, p.y - 2, 4, 4);
+        }
+
+        long period = maxTime - minTime;
+        long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
+        long start = (minTime / step) * step;
+
+        g.setColor(Color.BLACK);
+
+        for (long tick = start; tick < maxTime; tick += step) {
+            int cY = PAD_TOP + (int) ((height - (PAD_TOP + PAD_BOTTOM)) * (tick - minTime) / (maxTime - minTime));
+            g.drawLine(10, cY, width - (PAD_RIGHT), cY);
+            g.drawString(String.format("%d us", TimeUnit.NANOSECONDS.toMicros(tick)), 10, cY - 3);
         }
 
         ImageIO.write(image, "png", new File(fileNamePng));
