@@ -20,8 +20,12 @@ import net.shipilev.fjptrace.Event;
 import net.shipilev.fjptrace.EventType;
 import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
+import net.shipilev.fjptrace.Selectors;
 import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskStatus;
+import net.shipilev.fjptrace.WorkerStatusBL;
+import net.shipilev.fjptrace.WorkerStatusJN;
+import net.shipilev.fjptrace.WorkerStatusPK;
 import net.shipilev.fjptrace.util.Multimap;
 import net.shipilev.fjptrace.util.PairedList;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
@@ -58,7 +62,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private static final int PAD_LEFT = 150;
     private static final int PAD_RIGHT = 50;
-    private static final int PAD_TOP = 100;
+    private static final int PAD_TOP = 200;
     private static final int PAD_BOTTOM = 50;
 
     // transient
@@ -218,24 +222,12 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 g.setColor(Color.RED);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
-        }
 
-        // Intra-thread edges
-        for (Task p : subEvents.keySet()) {
-            List<Event> se = subEvents.get(p);
-            for (Long w : workerId.keySet()) {
-                Event lastEvent = null;
-                for (Event e : se) {
-                    if (w == e.workerId) {
-                        if (lastEvent != null) {
-                            Point p1 = map(lastEvent);
-                            Point p2 = map(e);
-                            g.setColor(Color.LIGHT_GRAY);
-                            g.drawLine(p1.x, p1.y, p2.x, p2.y);
-                        }
-                        lastEvent = e;
-                    }
-                }
+            for (Pair<Event, Event> pair : product(byType.get(EventType.EXEC), byType.get(EventType.EXECUTED))) {
+                Point p1 = map(pair.t1);
+                Point p2 = map(pair.t2);
+                g.setColor(Color.LIGHT_GRAY);
+                g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
         }
 
@@ -246,6 +238,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             g.fillRect(p.x - 2, p.y - 2, 4, 4);
         }
 
+        // time scale
         long period = maxTime - minTime;
         long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
         long start = (minTime / step) * step;
@@ -257,6 +250,21 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             g.drawLine(10, cY, width - (PAD_RIGHT), cY);
             g.drawString(String.format("%d us", TimeUnit.NANOSECONDS.toMicros(tick)), 10, cY - 3);
         }
+
+        // legend
+        final int LEG_STEP = 20;
+
+        g.setColor(Color.BLUE);         g.fillRect(10 + PAD_LEFT, 10 + 0*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.GREEN);        g.fillRect(10 + PAD_LEFT, 10 + 1*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.RED);          g.fillRect(10 + PAD_LEFT, 10 + 2*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.LIGHT_GRAY);   g.fillRect(10 + PAD_LEFT, 10 + 3*LEG_STEP, LEG_STEP, LEG_STEP);
+
+        g.setColor(Color.BLACK);
+        g.drawString("SUBMIT -> EXEC edge for the same task",       10 + PAD_LEFT + LEG_STEP + 3, 10 + 0*LEG_STEP + LEG_STEP - 5);
+        g.drawString("FORK -> EXEC edge for the same task",         10 + PAD_LEFT + LEG_STEP + 3, 10 + 1*LEG_STEP + LEG_STEP - 5);
+        g.drawString("EXECUTED -> JOINED edge for the same task",   10 + PAD_LEFT + LEG_STEP + 3, 10 + 2*LEG_STEP + LEG_STEP - 5);
+        g.drawString("EXEC -> EXECUTED edge for the same task",     10 + PAD_LEFT + LEG_STEP + 3, 10 + 3*LEG_STEP + LEG_STEP - 5);
+
 
         ImageIO.write(image, "png", new File(fileNamePng));
     }
