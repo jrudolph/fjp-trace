@@ -49,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private final TaskStatus subgraphs;
-    private final String fileNameDot;
     private final String fileNamePng;
     private final Events events;
     private final long fromTime;
@@ -69,7 +68,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print task subtrees");
-        this.fileNameDot = opts.getTargetPrefix() + "-subtrees.dot";
         this.fileNamePng = opts.getTargetPrefix() + "-subtrees.png";
         this.fromTime = opts.getFromTime();
         this.toTime = opts.getToTime();
@@ -82,8 +80,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     @Override
     public void doWork() throws Exception {
         // walk the trees
-
-        PrintWriter pw = new PrintWriter(fileNameDot);
 
         // only record the events for the interesting region
         for (Event e : events) {
@@ -162,10 +158,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             maxTime = Math.max(maxTime, e.time);
         }
 
-        render(pw, allEvents, subEvents);
-
-        pw.flush();
-        pw.close();
+        render(allEvents, subEvents);
     }
 
     private Point map(Event e) {
@@ -175,7 +168,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 );
     }
 
-    private void render(PrintWriter pw, Collection<Event> events, Multimap<Task, Event> subEvents) throws IOException {
+    private void render(Collection<Event> events, Multimap<Task, Event> subEvents) throws IOException {
 
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
@@ -234,7 +227,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 Event lastEvent = null;
                 for (Event e : se) {
                     if (w == e.workerId) {
-                        if (lastEvent != null && (lastEvent.eventType != EventType.PARK)) {
+                        if (lastEvent != null) {
                             Point p1 = map(lastEvent);
                             Point p2 = map(e);
                             g.setColor(Color.LIGHT_GRAY);
