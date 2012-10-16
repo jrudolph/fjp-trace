@@ -93,4 +93,8 @@ public class Event implements Comparable<Event> {
     public String toString() {
         return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: [w: " + workerId + "] " + eventType + "(" + taskTag + ")";
     }
+
+    public String shortID() {
+        return  eventType + "(" + taskTag + ")";
+    }
 }

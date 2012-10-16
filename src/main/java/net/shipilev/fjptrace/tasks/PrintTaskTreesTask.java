@@ -26,6 +26,8 @@ import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +44,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print task subtrees");
-        this.fileName = opts.getTargetPrefix() + "-subtrees.txt";
+        this.fileName = opts.getTargetPrefix() + "-subtrees.dot";
         this.fromTime = opts.getFromTime();
         this.toTime = opts.getToTime();
         this.events = events;
@@ -78,6 +80,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             List<Task> prev = new ArrayList<>();
             List<Task> cur = new ArrayList<>();
 
+            List<Long> workers = new ArrayList<>();
             List<Event> events = new ArrayList<>();
 
             cur.add(t);
@@ -92,16 +95,37 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                         cur.addAll(children);
                     }
                     events.addAll(c.getEvents());
+                    workers.add(c.getWorker());
                 }
 
             }
 
-            pw.println("Events for parent " + t);
-            for (Event e : events) {
-                pw.println(e);
+            // emit graph info
+
+            Collections.sort(events, new Comparator<Event>() {
+                @Override
+                public int compare(Event o1, Event o2) {
+                    return Long.compare(o1.time, o2.time);
+                }
+            });
+
+            pw.println("digraph {");
+
+            // emit all sequencing for workers first
+            for (Long w : workers) {
+
+                Event lastEvent = null;
+                for (Event e : events) {
+                    if (e.workerId == w) {
+                        if (lastEvent != null) {
+                            pw.println(" " + lastEvent.shortID() + " -> " + e.shortID() + " [timeDiff = " + (e.time - lastEvent.time) + "];");
+                        }
+                        lastEvent = e;
+                    }
+                }
             }
 
-
+            pw.println("}");
         }
 
         pw.flush();
