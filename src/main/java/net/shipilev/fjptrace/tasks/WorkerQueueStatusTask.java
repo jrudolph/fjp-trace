@@ -49,21 +49,21 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT:
-                    taskToWorker.put(e.taskTag, SUBMISSION_WORKER);
+                    taskToWorker.put(e.tag, SUBMISSION_WORKER);
                     break;
 
                 case FORK:
                     status.register(e.time, e.workerId, currentCount.add(e.workerId));
-                    taskToWorker.put(e.taskTag, e.workerId);
+                    taskToWorker.put(e.tag, e.workerId);
                     break;
 
                 case INVOKE:
                     status.register(e.time, e.workerId, currentCount.add(e.workerId));
-                    taskToWorker.put(e.taskTag, e.workerId);
+                    taskToWorker.put(e.tag, e.workerId);
                     break;
 
                 case EXEC: {
-                    Long owner = taskToWorker.remove(e.taskTag);
+                    Long owner = taskToWorker.remove(e.tag);
 
                     if (owner == null) {
                         getPw().println("WARNING: No owner is recorded for executing task! This event: " + e);
@@ -79,7 +79,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
                 }
 
                 case JOINED: {
-                    Long owner = taskToWorker.remove(e.taskTag);
+                    Long owner = taskToWorker.remove(e.tag);
 
                     if (owner != null) {
                         getPw().println("WARNING: Joined the task without prior record of execution, assume it had executed, fixing up the queue. This event: " + e);

@@ -158,7 +158,7 @@ public class TaskStatus {
     }
 
     public void recordEvent(Event e) {
-        newTask(e.taskTag).recordEvent(e);
+        newTask(e.tag).recordEvent(e);
     }
 
 }

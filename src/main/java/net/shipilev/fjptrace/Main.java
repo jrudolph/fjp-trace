@@ -95,7 +95,7 @@ public class Main {
             }
 
             {
-                WorkerStatusTask wStatus = new WorkerStatusTask(events);
+                WorkerStatusTask wStatus = new WorkerStatusTask(opts, events);
                 wStatus.fork();
                 ForkJoinTask.invokeAll(
                         new RenderWorkerStateTask(opts, events, wStatus.join()),
@@ -105,7 +105,7 @@ public class Main {
             }
 
             {
-                WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(events);
+                WorkerQueueStatusTask wqStatus = new WorkerQueueStatusTask(opts, events);
                 wqStatus.fork();
                 ForkJoinTask.invokeAll(
                         new RenderWorkerQueueTask(opts, events, wqStatus.join())

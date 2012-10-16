@@ -155,7 +155,9 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
         for (Event e : events) {
-            tasks.put(e.taskTag, e);
+            if (e.eventType.target() == EventType.Target.TASK) {
+                tasks.put(e.tag, e);
+            }
         }
 
         // render graph: prepare canvas

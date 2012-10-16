@@ -22,13 +22,13 @@ public class Event implements Comparable<Event> {
     public long time;
     public final EventType eventType;
     public final long workerId;
-    public final int taskTag;
+    public final int tag;
 
-    public Event(long time, EventType eventType, long workerId, int taskTag) {
+    public Event(long time, EventType eventType, long workerId, int tag) {
         this.time = time;
         this.eventType = eventType;
         this.workerId = workerId;
-        this.taskTag = taskTag;
+        this.tag = tag;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class Event implements Comparable<Event> {
         if (eventType != event.eventType) {
             return false;
         }
-        if (taskTag != event.taskTag) {
+        if (tag != event.tag) {
             return false;
         }
         if (workerId != event.workerId) {
@@ -69,7 +69,7 @@ public class Event implements Comparable<Event> {
         if (r1 != 0)
             return r1;
 
-        int r2 = Long.compare(o1.taskTag, o2.taskTag);
+        int r2 = Long.compare(o1.tag, o2.tag);
         if (r2 != 0)
             return r2;
 
@@ -85,16 +85,16 @@ public class Event implements Comparable<Event> {
         int result = (int) (time ^ (time >>> 32));
         result = 31 * result + (eventType != null ? eventType.hashCode() : 0);
         result = 31 * result + (int)(workerId ^ (workerId >>> 32));
-        result = 31 * result + taskTag;
+        result = 31 * result + tag;
         return result;
     }
 
     @Override
     public String toString() {
-        return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: [w: " + workerId + "] " + eventType + "(" + taskTag + ")";
+        return "@" + time + " ns, @" + TimeUnit.NANOSECONDS.toMillis(time) + " ms: [w: " + workerId + "] " + eventType + "(" + tag + ")";
     }
 
     public String shortID() {
-        return  eventType + "(" + taskTag + ")";
+        return  eventType + "(" + tag + ")";
     }
 }

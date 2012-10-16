@@ -1069,7 +1069,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             if (traceEventPos > 0) {
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
                 U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_BLOCK.ordinal());
-                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, TagGenerator.NULL_TASK_ID);
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)ownerId);
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
                 traceEventPos += CHUNK_SIZE;
 
@@ -1087,7 +1087,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
                 U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_UNBLOCK.ordinal());
-                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, TagGenerator.NULL_TASK_ID);
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)ownerId);
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
                 traceEventPos += CHUNK_SIZE;
 

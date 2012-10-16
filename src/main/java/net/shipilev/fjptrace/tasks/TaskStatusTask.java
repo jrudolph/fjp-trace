@@ -53,7 +53,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT: {
-                    Task task = taskStatus.newTask(e.taskTag);
+                    Task task = taskStatus.newTask(e.tag);
                     taskToID.put(task, externalTaskID++);
                     taskStatus.parent(task);
                     break;
@@ -61,7 +61,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
                 case INVOKE:
                 case FORK: {
-                    Task task = taskStatus.newTask(e.taskTag);
+                    Task task = taskStatus.newTask(e.tag);
                     Task currentTask = currentExec.get(e.workerId);
                     taskToID.put(task, taskToID.get(currentTask));
                     taskStatus.link(currentTask, task);
@@ -70,7 +70,7 @@ public class TaskStatusTask extends LoggedRecursiveTask<TaskStatus> {
 
                 case EXEC: {
                     Task currentTask = currentExec.get(e.workerId);
-                    Task newTask = taskStatus.get(e.taskTag);
+                    Task newTask = taskStatus.get(e.tag);
                     newTask.setWorker(e.workerId);
 
                     if (currentTask != null) {

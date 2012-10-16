@@ -21,75 +21,92 @@ public enum EventType {
     /**
      * Task is being forked.
      */
-    FORK,
+    FORK(Target.TASK),
 
     /**
      * Task is being joined.
      */
-    JOIN,
+    JOIN(Target.TASK),
 
     /**
      * Task has joined.
      */
-    JOINED,
+    JOINED(Target.TASK),
 
     /**
      * Task is about to be executed.
      */
-    EXEC,
+    EXEC(Target.TASK),
 
     /**
      * Task has executed.
      */
-    EXECUTED,
+    EXECUTED(Target.TASK),
 
     /**
      * Task is about to be invoked.
      */
-    INVOKE,
+    INVOKE(Target.TASK),
 
     /**
      * Task has been invoked.
      */
-    INVOKED,
+    INVOKED(Target.TASK),
 
     /**
      * Worker is about to park.
      */
-    PARK,
+    PARK(Target.THREAD),
 
     /**
      * Worker to be unparked.
      */
-    UNPARK,
+    UNPARK(Target.THREAD),
 
     /**
      * Worker had just unparked.
      */
-    UNPARKED,
+    UNPARKED(Target.THREAD),
 
     /**
      * Worker to start waiting
      */
-    WAIT,
+    WAIT(Target.THREAD),
 
     /**
      * Worker had completed waiting
      */
-    WAITED,
+    WAITED(Target.THREAD),
 
     /**
      * Task was submitted.
      */
-    SUBMIT,
+    SUBMIT(Target.TASK),
 
     /**
      * Tracer is blocked (e.g. waiting for event dump)
      */
-    TRACE_BLOCK,
+    TRACE_BLOCK(Target.THREAD),
 
     /**
      * Tracer is unblocked (e.g. waiting for event dump)
      */
-    TRACE_UNBLOCK,
+    TRACE_UNBLOCK(Target.THREAD),
+    ;
+
+    private final Target target;
+
+    EventType(Target target) {
+        this.target = target;
+    }
+
+    public Target target() {
+        return target;
+    }
+
+    public enum Target {
+        TASK,
+        THREAD
+    }
+
 }
