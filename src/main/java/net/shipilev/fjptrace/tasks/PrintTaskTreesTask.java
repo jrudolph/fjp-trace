@@ -182,28 +182,28 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 byType.put(e.eventType, e);
             }
 
-            for (Pair<Event, Event> pair : product(byType.get(EventType.SUBMIT), byType.get(EventType.EXEC))) {
+            for (Pair<Event, Event> pair : product(byType.get(EventType.SUBMIT), byType.get(EventType.EXEC), true)) {
                 Point p1 = map(pair.t1);
                 Point p2 = map(pair.t2);
                 g.setColor(Color.BLUE);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
 
-            for (Pair<Event, Event> pair : product(byType.get(EventType.FORK), byType.get(EventType.EXEC))) {
+            for (Pair<Event, Event> pair : product(byType.get(EventType.FORK), byType.get(EventType.EXEC), false)) {
                 Point p1 = map(pair.t1);
                 Point p2 = map(pair.t2);
                 g.setColor(Color.GREEN);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
 
-            for (Pair<Event, Event> pair : product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED))) {
+            for (Pair<Event, Event> pair : product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED), false)) {
                 Point p1 = map(pair.t1);
                 Point p2 = map(pair.t2);
                 g.setColor(Color.RED);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
 
-            for (Pair<Event, Event> pair : product(byType.get(EventType.EXEC), byType.get(EventType.EXECUTED))) {
+            for (Pair<Event, Event> pair : product(byType.get(EventType.EXEC), byType.get(EventType.EXECUTED), true)) {
                 Point p1 = map(pair.t1);
                 Point p2 = map(pair.t2);
                 g.setColor(Color.LIGHT_GRAY);
@@ -249,11 +249,13 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         ImageIO.write(image, "png", new File(fileNamePng));
     }
 
-    private <T1, T2> Collection<Pair<T1, T2>> product(Collection<T1> list1, Collection<T2> list2) {
-        List<Pair<T1, T2>> result = new ArrayList<Pair<T1, T2>>();
-        for (T1 e1 : list1) {
-            for (T2 e2 : list2) {
-                result.add(new Pair<T1, T2>(e1, e2));
+    private Collection<Pair<Event, Event>> product(Collection<Event> list1, Collection<Event> list2, boolean sameThread) {
+        List<Pair<Event, Event>> result = new ArrayList<>();
+        for (Event e1 : list1) {
+            for (Event e2 : list2) {
+                if (e1.workerId != e2.workerId || sameThread) {
+                    result.add(new Pair<Event, Event>(e1, e2));
+                }
             }
         }
         return result;
