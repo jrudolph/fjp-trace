@@ -1546,7 +1546,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                     if (U.compareAndSwapLong(this, CTL, c, nc)) {
                         w.eventCount = (e + E_SEQ) & E_MASK;
                         if ((p = w.parker) != null) {
-                            registerEvent(EventType.UNPARKED, (int)p.getId());
+                            registerEvent(EventType.UNPARK, (int)p.getId());
                             U.unpark(p);                // activate and release
                         }
                         break;
