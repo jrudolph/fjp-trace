@@ -220,7 +220,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
         // time scale
         long period = toTime - fromTime;
-        long step = (long) Math.pow(10, Math.floor(Math.log10(period)) - 1);
+        long step = (long) Math.pow(10, Math.floor(Math.log10(period)));
         long start = (fromTime / step) * step;
 
         g.setColor(Color.BLACK);
