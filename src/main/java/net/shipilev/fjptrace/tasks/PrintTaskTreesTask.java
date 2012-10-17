@@ -42,6 +42,8 @@ import java.util.concurrent.TimeUnit;
 
 public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
+    private final static boolean DETAIL = Boolean.getBoolean("taskTree.detail");
+
     private final TaskStatus subgraphs;
     private final String fileNamePng;
     private final Events events;
@@ -216,6 +218,9 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             Point p = map(e);
             g.setColor(Color.BLACK);
             g.fillRect(p.x - 2, p.y - 2, 4, 4);
+            if (DETAIL) {
+                g.drawString(e.shortID(), p.x + 2, p.y + 5);
+            }
         }
 
         // time scale
