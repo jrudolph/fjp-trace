@@ -46,7 +46,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private final TaskStatus subgraphs;
     private final String fileNamePng;
-    private final Events events;
+    private final Events exEvents;
     private final long fromTime;
     private final long toTime;
     private final int width;
@@ -63,7 +63,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     public PrintTaskTreesTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print task subtrees");
         this.fileNamePng = opts.getTargetPrefix() + "-subtrees.png";
-        this.events = events;
+        this.exEvents = events;
         this.fromTime = Math.max(events.getStart(), opts.getFromTime());
         this.toTime = Math.min(events.getEnd(), opts.getToTime());
         this.width = opts.getWidth();
@@ -75,11 +75,15 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
     public void doWork() throws Exception {
         // walk the trees
 
+        List<Event> allEvents = new ArrayList<>();
+        List<Event> taskEvents = new ArrayList<>();
+
         // only record the events for the interesting region
-        for (Event e : events) {
+        for (Event e : exEvents) {
             if (e.time < fromTime) continue;
             if (e.time > toTime) break;
             subgraphs.recordEvent(e);
+            allEvents.add(e);
         }
 
         // only care about the parents in the interesting region
@@ -89,9 +93,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 interestingParents.add(t);
             }
         }
-
-        List<Event> allEvents = new ArrayList<>();
-        Multimap<Task, Event> subEvents = new Multimap<>();
 
         for (Task t : interestingParents) {
 
@@ -119,8 +120,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
             }
 
-            allEvents.addAll(events);
-            subEvents.putAll(t, events);
+            taskEvents.addAll(events);
         }
 
         // emit graph info
@@ -137,12 +137,12 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         {
             workerId.put(-1L, 0);
             int id = 1;
-            for (Long w : events.getWorkers()) {
+            for (Long w : exEvents.getWorkers()) {
                 workerId.put(w, id++);
             }
         }
 
-        render(allEvents, subEvents);
+        render(allEvents, taskEvents);
     }
 
     private Point map(Event e) {
@@ -152,14 +152,12 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 );
     }
 
-    private void render(Collection<Event> events, Multimap<Task, Event> subEvents) throws IOException {
+    private void render(Collection<Event> allEvents, Collection<Event> taskEvents) throws IOException {
 
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
-        for (Event e : events) {
-            if (e.eventType.target() == EventType.Target.TASK) {
-                tasks.put(e.tag, e);
-            }
+        for (Event e : taskEvents) {
+            tasks.put(e.tag, e);
         }
 
         // render graph: prepare canvas
@@ -214,7 +212,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         }
 
         // render graph: nodes
-        for (Event e : events) {
+        for (Event e : allEvents) {
             Point p = map(e);
             g.setColor(Color.BLACK);
             g.fillRect(p.x - 2, p.y - 2, 4, 4);
