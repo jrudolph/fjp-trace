@@ -199,7 +199,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             for (Pair<Event, Event> pair : product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED), false)) {
                 Point p1 = map(pair.t1);
                 Point p2 = map(pair.t2);
-                g.setColor(Color.RED);
+                g.setColor(Color.ORANGE);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
             }
 
@@ -208,6 +208,26 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 Point p2 = map(pair.t2);
                 g.setColor(Color.LIGHT_GRAY);
                 g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            }
+        }
+
+        // render graph: edges
+        // Inter-thread nodes:
+        //   UNPARK -> UNPARKED
+        Map<Integer, Event> unparkRequests = new HashMap<>();
+        for (Event e : allEvents) {
+            if (e.eventType == EventType.UNPARK) {
+                unparkRequests.put(e.tag, e);
+            }
+
+            if (e.eventType == EventType.UNPARKED) {
+                Event unparkReq = unparkRequests.get(e.tag);
+                if (unparkReq != null) {
+                    Point p1 = map(unparkReq);
+                    Point p2 = map(e);
+                    g.setColor(Color.RED);
+                    g.drawLine(p1.x, p1.y, p2.x, p2.y);
+                }
             }
         }
 
@@ -239,14 +259,16 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
         g.setColor(Color.BLUE);         g.fillRect(10 + PAD_LEFT, 10 + 0*LEG_STEP, LEG_STEP, LEG_STEP);
         g.setColor(Color.GREEN);        g.fillRect(10 + PAD_LEFT, 10 + 1*LEG_STEP, LEG_STEP, LEG_STEP);
-        g.setColor(Color.RED);          g.fillRect(10 + PAD_LEFT, 10 + 2*LEG_STEP, LEG_STEP, LEG_STEP);
-        g.setColor(Color.LIGHT_GRAY);   g.fillRect(10 + PAD_LEFT, 10 + 3*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.ORANGE);       g.fillRect(10 + PAD_LEFT, 10 + 2*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.RED);          g.fillRect(10 + PAD_LEFT, 10 + 3*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.LIGHT_GRAY);   g.fillRect(10 + PAD_LEFT, 10 + 4*LEG_STEP, LEG_STEP, LEG_STEP);
 
         g.setColor(Color.BLACK);
         g.drawString("SUBMIT -> EXEC edge for the same task",       10 + PAD_LEFT + LEG_STEP + 3, 10 + 0*LEG_STEP + LEG_STEP - 5);
         g.drawString("FORK -> EXEC edge for the same task",         10 + PAD_LEFT + LEG_STEP + 3, 10 + 1*LEG_STEP + LEG_STEP - 5);
         g.drawString("EXECUTED -> JOINED edge for the same task",   10 + PAD_LEFT + LEG_STEP + 3, 10 + 2*LEG_STEP + LEG_STEP - 5);
-        g.drawString("EXEC -> EXECUTED edge for the same task",     10 + PAD_LEFT + LEG_STEP + 3, 10 + 3*LEG_STEP + LEG_STEP - 5);
+        g.drawString("UNPARK -> UNPARKED edge for the same thread", 10 + PAD_LEFT + LEG_STEP + 3, 10 + 3*LEG_STEP + LEG_STEP - 5);
+        g.drawString("EXEC -> EXECUTED edge for the same task",     10 + PAD_LEFT + LEG_STEP + 3, 10 + 4*LEG_STEP + LEG_STEP - 5);
 
 
         ImageIO.write(image, "png", new File(fileNamePng));
