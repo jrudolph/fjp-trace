@@ -1257,7 +1257,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      * to reduce ThreadLocal pollution and because random motion
      * to avoid contention in one pool is likely to hold for others.
      */
-    private static final ThreadSubmitter submitters;
+    static final ThreadSubmitter submitters;
 
     // static constants
 
