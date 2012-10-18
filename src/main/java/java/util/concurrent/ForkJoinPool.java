@@ -1073,9 +1073,9 @@ public class ForkJoinPool extends AbstractExecutorService {
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, ownerId);
                 traceEventPos += CHUNK_SIZE;
 
-                synchronized (pool.traceWriter) {
+                synchronized (TRACE_WRITER) {
                     try {
-                        pool.traceWriter.write(traceEventBuffer, 0, traceEventPos);
+                        TRACE_WRITER.write(traceEventBuffer, 0, traceEventPos);
                     } catch (IOException e) {
                         // should never happen
                     }
@@ -1244,11 +1244,37 @@ public class ForkJoinPool extends AbstractExecutorService {
     private static final long BUFFER_TIME = TimeUnit.MILLISECONDS.toNanos(Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferTimeMsec", 1000));
 
     static final TagGenerator TAG_GENERATOR;
+    static final OutputStream TRACE_WRITER;
 
     static {
         System.err.println("Using instrumented ForkJoinPool");
         System.err.println(TRACE ? "Tracing enabled, logging to " + TRACE_LOG + " with per-worker buffers of " + (BUFFER_LIMIT / 1024) + "Kb" : "Tracing is disabled");
-        TAG_GENERATOR = TRACE ? new TagGenerator() : null;
+
+        if (TRACE) {
+            TAG_GENERATOR = new TagGenerator();
+            try {
+                TRACE_WRITER = new FileOutputStream(TRACE_LOG);
+            } catch (IOException e) {
+                // FIXME: Should not throw exception here?
+                throw new IllegalStateException(e);
+            }
+        } else {
+            TAG_GENERATOR = null;
+            TRACE_WRITER = null;
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                if (TRACE_WRITER != null) {
+                    try {
+                        TRACE_WRITER.close();
+                    } catch (IOException e) {
+                        // do nothing
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -1354,7 +1380,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     final AtomicLong stealCount;               // collect counts when terminated
     final AtomicInteger nextWorkerNumber;      // to create worker name string
     final String workerNamePrefix;             // to create worker name string
-    final OutputStream traceWriter;            // trace writer
 
     //  Creating, registering, and deregistering workers
 
@@ -2280,17 +2305,6 @@ public class ForkJoinPool extends AbstractExecutorService {
         lock.lock();
         this.runState = 1;              // set init flag
         lock.unlock();
-
-        if (TRACE) {
-            try {
-                traceWriter = new FileOutputStream(TRACE_LOG);
-            } catch (IOException e) {
-                // FIXME: Should not throw exception here?
-                throw new IllegalStateException(e);
-            }
-        } else {
-            traceWriter = null;
-        }
     }
 
     // Execution methods
@@ -2731,12 +2745,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     public void shutdown() {
         checkPermission();
         tryTerminate(false, true);
-        if (traceWriter != null)
-            try {
-                traceWriter.close();
-            } catch (IOException e) {
-                // do nothing
-            }
     }
 
     /**
@@ -2758,12 +2766,6 @@ public class ForkJoinPool extends AbstractExecutorService {
     public List<Runnable> shutdownNow() {
         checkPermission();
         tryTerminate(true, true);
-        if (traceWriter != null)
-            try {
-                traceWriter.close();
-            } catch (IOException e) {
-                // do nothing
-            }
         return Collections.emptyList();
     }
 
