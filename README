@@ -40,8 +40,9 @@ Most of the graphs are showing the progress in time.
      should not be) used in conjunction with appropriate chemical agents to bring
      the unforgettable experience.
 
- 7. *-subgraphs.png: the decomposition trees in more detail, down to individual traces.
-     You might find more convenient to focus on specific parts with time range.
+ 7. *-subgraphs.png: the decomposition trees in more detail, down to individual 
+     traces. You might find more convenient to focus on specific parts with time 
+     range. Also, -DtaskTree.detail=true to render event labels.
 
  8. *-summary.txt: summary statistics for tasks executed
 
@@ -74,4 +75,17 @@ QUICK START:
  You can also use some of the advanced options, see the help:
    $ java -jar fjp-trace.jar -h
 
+
+CAVEATS:
+ * Trace format is not considered to be stable, although it almost never
+   changes. Keep that in mind while conducting the experiments spanning days
+   of runs: the update to the tracer can invalidate the previous traces.
+
+ * Tracer can generate *lots* of data if FJP is loaded enough. You might want
+   to use limit/offset during the trace loading. Asking for limit is almost 
+   always safe, while asking for offset may sometimes jeopardize the data, 
+   since the data about the past would be lost from the inference.
+
+ * Use from/to time to focus on specific parts of the trace! This will still
+   load the entire trace file, and so the data integrity would not be violated.
 
