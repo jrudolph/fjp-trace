@@ -644,7 +644,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             this.mode = mode;
             this.pool = pool;
             this.owner = owner;
-            this.ownerId = (owner != null) ? owner.getId() : -1;
+            this.ownerId = (owner != null) ? owner.getId() : NO_OWNER_ID;
             this.traceEventBuffer = (TRACE ? new byte[BUFFER_LIMIT] : null);
             // Place indices in the center of array (that is not yet allocated)
             base = top = INITIAL_QUEUE_CAPACITY >>> 1;
@@ -1032,8 +1032,6 @@ public class ForkJoinPool extends AbstractExecutorService {
                 U.unpark(p);
         }
 
-        static final int CHUNK_SIZE = 22;
-
         /**
          * Register local event, called by owner thread only
          */
@@ -1126,6 +1124,8 @@ public class ForkJoinPool extends AbstractExecutorService {
         Thread caller = Thread.currentThread();
         if (caller instanceof ForkJoinWorkerThread)
             ((ForkJoinWorkerThread)caller).workQueue.registerEvent(event, traceTag);
+        else
+            submitters.get().registerEvent(event, traceTag);  // assume this is submitter
     }
 
     /**
@@ -1146,9 +1146,78 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     static final class Submitter {
         int seed;
+        byte[] traceEventBuffer;
+        int traceEventPos;
+        long nextWrite;
+
         Submitter() {
             int s = nextSubmitterSeed.getAndAdd(SEED_INCREMENT);
             seed = (s == 0) ? 1 : s; // ensure non-zero
+            this.traceEventBuffer = (TRACE ? new byte[BUFFER_LIMIT] : null);
+        }
+
+        /**
+         * Register local event, called by owner thread only
+         */
+        final void registerEvent(EventType event, int tag) {
+            if (!TRACE) return;
+
+            long time = System.nanoTime();
+
+            if (nextWrite < time || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
+                // reserved the slot for one additional event
+                time = flush(time);
+            }
+
+            // All glory to hypno-toad!
+            U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
+            U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
+            U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, tag);
+            U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+            traceEventPos += CHUNK_SIZE;
+        }
+
+        /**
+         * Flushes the tracing buffer
+         */
+        final long flush() {
+            return flush(System.nanoTime());
+        }
+
+        /**
+         * Flushes the tracing buffer and mark the current time
+         */
+        final long flush(long time) {
+            if (traceEventPos > 0) {
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
+                U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_BLOCK.ordinal());
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)NO_OWNER_ID);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+                traceEventPos += CHUNK_SIZE;
+
+                synchronized (TRACE_WRITER) {
+                    try {
+                        TRACE_WRITER.write(traceEventBuffer, 0, traceEventPos);
+                    } catch (IOException e) {
+                        // should never happen
+                    }
+                }
+
+                time = System.nanoTime();
+                nextWrite = time + ThreadLocalRandom.current().nextLong(BUFFER_TIME, BUFFER_TIME*2);
+                traceEventPos = 0;
+
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
+                U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_UNBLOCK.ordinal());
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)NO_OWNER_ID);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+                traceEventPos += CHUNK_SIZE;
+
+                return time;
+            } else {
+                nextWrite = time + ThreadLocalRandom.current().nextLong(BUFFER_TIME, BUFFER_TIME*2);
+                return time;
+            }
         }
     }
 
@@ -1238,6 +1307,8 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     private static final int SEED_INCREMENT = 0x61c88647;
 
+    static final int CHUNK_SIZE = 22;
+    static final long NO_OWNER_ID = -1;
     private static final boolean TRACE = Boolean.getBoolean("java.util.concurrent.ForkJoinPool.trace");
     private static final String TRACE_LOG = System.getProperty("java.util.concurrent.ForkJoinPool.traceLog", "forkjoin.trace");
     private static final int BUFFER_LIMIT = Integer.getInteger("java.util.concurrent.ForkJoinPool.bufferSize", 1024*1024);
