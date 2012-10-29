@@ -62,16 +62,6 @@ public class Events implements Iterable<Event> {
 
         }
 
-        // filter out submitters
-        EnumSet<EventType> infraEvents = EnumSet.of(EventType.SUBMIT);
-        Set<Long> submissionWorkers = new HashSet<>();
-        for (Event e : events) {
-            if (infraEvents.contains(e.eventType)) {
-                submissionWorkers.add(e.workerId);
-            }
-        }
-        workers.removeAll(submissionWorkers);
-
         // cut off when some thread has no more events (assume we miss something beyond)
         Map<Long, Long> lastTime = new HashMap<>();
         for (Event e : events) {

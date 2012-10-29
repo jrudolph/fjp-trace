@@ -106,7 +106,12 @@ public class TaskStatus {
     public void register(long time, long workerId, int id) {
         times.add(time);
         ids.add(id);
-        tl.get(workerId).add(time, id);
+        Timeline<Integer> timeline = tl.get(workerId);
+        if (timeline != null) {
+            timeline.add(time, id);
+        } else {
+            System.err.println("No such worker: " + workerId);
+        }
     }
 
     public void parent(Task parentTask) {

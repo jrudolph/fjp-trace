@@ -49,7 +49,7 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
         for (Event e : events) {
             switch (e.eventType) {
                 case SUBMIT:
-                    taskToWorker.put(e.tag, SUBMISSION_WORKER);
+                    taskToWorker.put(e.tag, e.workerId);
                     break;
 
                 case FORK:
@@ -67,10 +67,6 @@ public class WorkerQueueStatusTask extends LoggedRecursiveTask<QueueStatus> {
 
                     if (owner == null) {
                         getPw().println("WARNING: No owner is recorded for executing task! This event: " + e);
-                        break;
-                    }
-
-                    if (owner == SUBMISSION_WORKER) {
                         break;
                     }
 

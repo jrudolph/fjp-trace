@@ -82,6 +82,8 @@ public class Main {
             checkEvents.fork();
             printEventsTask.fork();
 
+            printEventsTask.join();
+
             {
                 TaskStatusTask tStatus = new TaskStatusTask(events);
                 tStatus.fork();

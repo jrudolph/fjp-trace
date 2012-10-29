@@ -721,7 +721,6 @@ public class ForkJoinPool extends AbstractExecutorService {
                         U.putObject(a, (long)j, task);    // don't need "ordered"
                         top = s + 1;
                         submitted = true;
-                        registerEvent(EventType.SUBMIT, task.traceTag);
                     }
                 } finally {
                     runState = 0;                         // unlock
@@ -1180,6 +1179,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     static final class Submitter {
         int seed;
+        long id;
         byte[] traceEventBuffer;
         int traceEventPos;
         long nextWrite;
@@ -1188,6 +1188,10 @@ public class ForkJoinPool extends AbstractExecutorService {
             int s = nextSubmitterSeed.getAndAdd(SEED_INCREMENT);
             seed = (s == 0) ? 1 : s; // ensure non-zero
             this.traceEventBuffer = (TRACE ? new byte[BUFFER_LIMIT] : null);
+            this.id = Thread.currentThread().getId();
+
+            // register this thread had started to be active
+            registerEvent(EventType.UNPARKED, (int) id);
         }
 
         /**
@@ -1207,7 +1211,7 @@ public class ForkJoinPool extends AbstractExecutorService {
             U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
             U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) event.ordinal());
             U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, tag);
-            U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+            U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, id);
             traceEventPos += CHUNK_SIZE;
         }
 
@@ -1225,8 +1229,8 @@ public class ForkJoinPool extends AbstractExecutorService {
             if (traceEventPos > 0) {
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
                 U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_BLOCK.ordinal());
-                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)NO_OWNER_ID);
-                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)id);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, id);
                 traceEventPos += CHUNK_SIZE;
 
                 synchronized (TRACE_WRITER) {
@@ -1243,8 +1247,8 @@ public class ForkJoinPool extends AbstractExecutorService {
 
                 U.putLong (traceEventBuffer, BBASE + traceEventPos + 0, time);
                 U.putShort(traceEventBuffer, BBASE + traceEventPos + 8, (short) EventType.TRACE_UNBLOCK.ordinal());
-                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)NO_OWNER_ID);
-                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, NO_OWNER_ID);
+                U.putInt  (traceEventBuffer, BBASE + traceEventPos + 10, (int)id);
+                U.putLong (traceEventBuffer, BBASE + traceEventPos + 14, id);
                 traceEventPos += CHUNK_SIZE;
 
                 return time;
@@ -1624,6 +1628,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     private void doSubmit(ForkJoinTask<?> task) {
         Submitter s = submitters.get();
+        s.registerEvent(EventType.SUBMIT, task.traceTag);
         for (int r = s.seed, m = submitMask;;) {
             WorkQueue[] ws; WorkQueue q;
             int k = r & m & SQMASK;          // use only even indices
