@@ -55,14 +55,14 @@ public class Main {
         }
 
         ForkJoinPool pool = new ForkJoinPool();
-        pool.invoke(new MainTask(opts));
+        pool.invoke(new MainSequentialTask(opts));
     }
 
-    private static class MainTask extends RecursiveAction {
+    private static class MainRecursiveTask extends RecursiveAction {
 
         private final Options opts;
 
-        public MainTask(Options opts) {
+        public MainRecursiveTask(Options opts) {
             this.opts = opts;
         }
 
@@ -118,6 +118,58 @@ public class Main {
             traceEstimateTask.join();
             checkEvents.join();
             printEventsTask.join();
+
+        }
+    }
+
+    private static class MainSequentialTask extends RecursiveAction {
+
+        private final Options opts;
+
+        public MainSequentialTask(Options opts) {
+            this.opts = opts;
+        }
+
+        @Override
+        protected void compute() {
+            Events events = new ReadTask(opts).invoke();
+
+            /*
+               We are doing the tasks per stride, because we try to minimize heap impact.
+               This also explains silly nulls assigned for the tasks afterwards.
+             */
+
+            new CheckEventsTask(events).quietlyInvoke();
+            new PrintEventsTask(opts, events).quietlyInvoke();
+            new TraceBlockEstimatesTask(events).quietlyInvoke();
+
+            try {
+                TaskStatus tStatus = new TaskStatusTask(events).invoke();
+                new RenderExternalTaskColoringTask(opts, events, tStatus).invoke();
+                new RenderTaskExecTimeTask(opts, events, tStatus).invoke();
+                new PrintSummaryTask(opts, tStatus).invoke();
+                new PrintTaskTreesTask(opts, events, tStatus).invoke();
+            } catch (Exception e) {
+                // ignore
+                e.printStackTrace();
+            }
+
+            try {
+                WorkerStatus wStatus = new WorkerStatusTask(opts, events).invoke();
+                new RenderWorkerStateTask(opts, events, wStatus).invoke();
+                new PrintWorkerStateTask(opts, events, wStatus).invoke();
+            } catch (Exception e) {
+                // ignore
+                e.printStackTrace();
+            }
+
+            try {
+                QueueStatus wqStatus = new WorkerQueueStatusTask(opts, events).invoke();
+                new RenderWorkerQueueTask(opts, events, wqStatus).invoke();
+            } catch (Exception e) {
+                // ignore
+                e.printStackTrace();
+            }
 
         }
     }
