@@ -227,6 +227,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
 
     protected ForkJoinTask() {
         traceTag = (ForkJoinPool.TAG_GENERATOR == null) ? TagGenerator.DISABLED : ForkJoinPool.TAG_GENERATOR.next();
+        registerEvent(EventType.CREATED);
     }
 
     /**

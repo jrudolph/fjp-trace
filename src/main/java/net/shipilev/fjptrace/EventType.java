@@ -101,7 +101,12 @@ public enum EventType {
     /**
      * Completer finished
      */
-    COMPLETED(Target.TASK);
+    COMPLETED(Target.TASK),
+
+    /**
+     * Task was created
+     */
+    CREATED(Target.TASK);
 
     private final Target target;
 
