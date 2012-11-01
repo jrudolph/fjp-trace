@@ -63,7 +63,7 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
 
         PrintWriter pw = new PrintWriter(new GZIPOutputStreamEx(new FileOutputStream(filename)));
 
-        pw.format("%10s", "Time, us");
+        pw.format("%12s", "Time, ns");
         for (long w : events.getWorkers()) {
             pw.format("%20s", w);
         }
@@ -76,7 +76,7 @@ public class PrintWorkerStateTask extends LoggedRecursiveAction {
             if (count++ > linesToProcess) break;
             if ((count & 0xFFFF) == 0) reportProgress(count*1.0 / list.size());
 
-            pw.format("%10d", TimeUnit.NANOSECONDS.toMicros(e.time));
+            pw.format("%12d", TimeUnit.NANOSECONDS.toNanos(e.time));
 
             for (long w : events.getWorkers()) {
                 if (w == e.workerId) {
