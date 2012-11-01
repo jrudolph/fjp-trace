@@ -92,7 +92,16 @@ public enum EventType {
      * Tracer is unblocked (e.g. waiting for event dump)
      */
     TRACE_UNBLOCK(Target.THREAD),
-    ;
+
+    /**
+     * Completer had started
+     */
+    COMPLETING(Target.TASK),
+
+    /**
+     * Completer finished
+     */
+    COMPLETED(Target.TASK);
 
     private final Target target;
 

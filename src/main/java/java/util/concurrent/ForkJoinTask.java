@@ -666,7 +666,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         return getRawResult();
     }
 
-    private void registerEvent(EventType event) {
+    void registerEvent(EventType event, int traceTag) {
         Thread caller = Thread.currentThread();
         if (caller instanceof ForkJoinWorkerThread) {
             ((ForkJoinWorkerThread) caller).workQueue.registerEvent(event, traceTag);
@@ -674,6 +674,10 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             // try submitters
             ForkJoinPool.submitters.get().registerEvent(event, traceTag);
         }
+    }
+
+    void registerEvent(EventType event) {
+        registerEvent(event, traceTag);
     }
 
     /**
