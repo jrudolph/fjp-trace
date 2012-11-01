@@ -1126,8 +1126,13 @@ public class ForkJoinPool extends AbstractExecutorService {
 
             long time = System.nanoTime();
             if (nextWrite < time || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
-                // reserved the slot for one additional event
-                time = flush(time);
+                if (nextWrite == 0) {
+                    // very first event, write the time and bail out
+                    nextWrite = time;
+                } else {
+                    // reserved the slot for one additional event
+                    time = flush(time);
+                }
             }
 
             // All glory to hypno-toad!
@@ -1255,8 +1260,13 @@ public class ForkJoinPool extends AbstractExecutorService {
             long time = System.nanoTime();
 
             if (nextWrite < time || (traceEventPos + CHUNK_SIZE*2 > BUFFER_LIMIT)) {
-                // reserved the slot for one additional event
-                time = flush(time);
+                if (nextWrite == 0) {
+                    // very first event, write the time and bail out
+                    nextWrite = time;
+                } else {
+                    // reserved the slot for one additional event
+                    time = flush(time);
+                }
             }
 
             // All glory to hypno-toad!
