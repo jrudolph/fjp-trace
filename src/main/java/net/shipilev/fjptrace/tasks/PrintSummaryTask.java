@@ -16,10 +16,14 @@
 
 package net.shipilev.fjptrace.tasks;
 
+import net.shipilev.fjptrace.Event;
+import net.shipilev.fjptrace.Events;
 import net.shipilev.fjptrace.Options;
 import net.shipilev.fjptrace.Task;
 import net.shipilev.fjptrace.TaskStatus;
+import net.shipilev.fjptrace.util.Multiset;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -32,14 +36,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class PrintSummaryTask extends LoggedRecursiveAction {
 
     private final TaskStatus subgraphs;
     private final String fileName;
+    private final Events events;
 
-    public PrintSummaryTask(Options opts, TaskStatus subgraphs) {
+    public PrintSummaryTask(Options opts, Events events, TaskStatus subgraphs) {
         super("Print summary");
+        this.events = events;
         this.fileName = opts.getTargetPrefix() + "-summary.txt";
         this.subgraphs = subgraphs;
     }
@@ -131,8 +138,45 @@ public class PrintSummaryTask extends LoggedRecursiveAction {
             pw.printf("    threads:                           min = %5.2f, avg = %5.2f, max = %5.2f\n", s.threads.getMin(), s.threads.getMean(), s.threads.getMax());
         }
 
+        summarizeEvents(pw, events);
+
         pw.flush();
         pw.close();
+    }
+
+    private void summarizeEvents(PrintWriter pw, Events events) {
+        SummaryStatistics completeTimes = new SummaryStatistics();
+        SummaryStatistics execTimes = new SummaryStatistics();
+        Map<Integer, Long> times = new HashMap<>();
+
+        for (Event e : events) {
+            switch (e.eventType) {
+                case COMPLETING:
+                    times.put(e.tag, e.time);
+                    break;
+                case COMPLETED: {
+                    Long startTime = times.get(e.tag);
+                    if (startTime != null) {
+                        completeTimes.addValue(e.time - startTime);
+                    }
+                    break;
+                }
+                case EXEC:
+                    times.put(e.tag, e.time);
+                    break;
+                case EXECUTED:
+                    Long startTime = times.get(e.tag);
+                    if (startTime != null) {
+                        execTimes.addValue(e.time - startTime);
+                    }
+                    break;
+            }
+        }
+
+        pw.println();
+        pw.println("EXEC -> EXECUTED: " + TimeUnit.NANOSECONDS.toMillis((long) execTimes.getSum()) + "ms");
+        pw.println("COMPLETING -> COMPLETED: " + TimeUnit.NANOSECONDS.toMillis((long) completeTimes.getSum()) + "ms");
+
     }
 
     private static class LayerStatistics {

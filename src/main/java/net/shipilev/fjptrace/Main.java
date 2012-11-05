@@ -90,7 +90,7 @@ public class Main {
                 ForkJoinTask.invokeAll(
                         new RenderExternalTaskColoringTask(opts, events, tStatus.join()),
                         new RenderTaskExecTimeTask(opts, events, tStatus.join()),
-                        new PrintSummaryTask(opts, tStatus.join()),
+                        new PrintSummaryTask(opts, events, tStatus.join()),
                         new PrintTaskTreesTask(opts, events, tStatus.join())
                         );
                 tStatus = null;
@@ -147,7 +147,7 @@ public class Main {
                 TaskStatus tStatus = new TaskStatusTask(events).invoke();
                 new RenderExternalTaskColoringTask(opts, events, tStatus).invoke();
                 new RenderTaskExecTimeTask(opts, events, tStatus).invoke();
-                new PrintSummaryTask(opts, tStatus).invoke();
+                new PrintSummaryTask(opts, events, tStatus).invoke();
                 new PrintTaskTreesTask(opts, events, tStatus).invoke();
             } catch (Exception e) {
                 // ignore
