@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
     private final static boolean DETAIL = Boolean.getBoolean("taskTree.detail");
+    private static final Color EXECUTED_COLOR = new Color(200, 200, 200);
+    private static final Color COMPLETING_COLOR = new Color(200, 200, 0);
 
     private final TaskStatus subgraphs;
     private final String fileNamePng;
@@ -174,42 +176,11 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         //   SUBMIT -> EXEC
         //     FORK -> EXEC
         //     EXECED -> JOINED
-        for (Integer id : tasks.keySet()) {
-            List<Event> list = tasks.get(id);
-
-            Multimap<EventType, Event> byType = new Multimap<>();
-            for (Event e : list) {
-                byType.put(e.eventType, e);
-            }
-
-            for (Pair<Event, Event> pair : product(byType.get(EventType.SUBMIT), byType.get(EventType.EXEC), true)) {
-                Point p1 = map(pair.t1);
-                Point p2 = map(pair.t2);
-                g.setColor(Color.BLUE);
-                g.drawLine(p1.x, p1.y, p2.x, p2.y);
-            }
-
-            for (Pair<Event, Event> pair : product(byType.get(EventType.FORK), byType.get(EventType.EXEC), false)) {
-                Point p1 = map(pair.t1);
-                Point p2 = map(pair.t2);
-                g.setColor(Color.GREEN);
-                g.drawLine(p1.x, p1.y, p2.x, p2.y);
-            }
-
-            for (Pair<Event, Event> pair : product(byType.get(EventType.EXECUTED), byType.get(EventType.JOINED), false)) {
-                Point p1 = map(pair.t1);
-                Point p2 = map(pair.t2);
-                g.setColor(Color.ORANGE);
-                g.drawLine(p1.x, p1.y, p2.x, p2.y);
-            }
-
-            for (Pair<Event, Event> pair : product(byType.get(EventType.EXEC), byType.get(EventType.EXECUTED), true)) {
-                Point p1 = map(pair.t1);
-                Point p2 = map(pair.t2);
-                g.setColor(Color.LIGHT_GRAY);
-                g.drawLine(p1.x, p1.y, p2.x, p2.y);
-            }
-        }
+        renderEdges(tasks, g, EventType.SUBMIT, EventType.EXEC, false, Color.BLUE);
+        renderEdges(tasks, g, EventType.FORK, EventType.EXEC, false, Color.GREEN);
+        renderEdges(tasks, g, EventType.EXECUTED, EventType.JOINED, false, Color.RED);
+        renderEdges(tasks, g, EventType.EXEC, EventType.EXECUTED, true, EXECUTED_COLOR);
+        renderEdges(tasks, g, EventType.COMPLETING, EventType.COMPLETED, true, COMPLETING_COLOR);
 
         // render graph: edges
         // Inter-thread nodes:
@@ -235,6 +206,8 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         for (Event e : allEvents) {
             Point p = map(e);
             g.setColor(Color.BLACK);
+            g.fillRect(p.x - 3, p.y - 3, 6, 6);
+            g.setColor(getEventColor(e));
             g.fillRect(p.x - 2, p.y - 2, 4, 4);
             if (DETAIL) {
                 g.drawString(e.shortID(), p.x + 2, p.y + 5);
@@ -272,6 +245,43 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
 
         ImageIO.write(image, "png", new File(fileNamePng));
+    }
+
+    public void renderEdges(Multimap<Integer, Event> tasks, Graphics g, EventType type1, EventType type2, boolean sameThread, Color color) {
+        for (Integer id : tasks.keySet()) {
+            List<Event> list = tasks.get(id);
+
+            Multimap<EventType, Event> byType = new Multimap<>();
+            for (Event e : list) {
+                byType.put(e.eventType, e);
+            }
+
+            for (Pair<Event, Event> pair : product(byType.get(type1), byType.get(type2), sameThread)) {
+                Point p1 = map(pair.t1);
+                Point p2 = map(pair.t2);
+                g.setColor(color);
+                g.drawLine(p1.x, p1.y, p2.x, p2.y);
+            }
+        }
+    }
+
+    private Color getEventColor(Event e) {
+        switch (e.eventType) {
+            case FORK:
+                return Color.GREEN;
+            case SUBMIT:
+                return Color.BLUE;
+            case PARK:
+                return Color.RED;
+            case EXEC:
+            case EXECUTED:
+                return EXECUTED_COLOR;
+            case COMPLETING:
+            case COMPLETED:
+                return Color.YELLOW;
+            default:
+                return Color.BLACK;
+        }
     }
 
     private Collection<Pair<Event, Event>> product(Collection<Event> list1, Collection<Event> list2, boolean sameThread) {
