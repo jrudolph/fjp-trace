@@ -6,6 +6,8 @@
 
 package java.util.concurrent;
 
+import net.shipilev.fjptrace.EventType;
+
 /**
  * A {@link ForkJoinTask} with a completion action
  * performed when triggered and there are no remaining pending
@@ -400,7 +402,9 @@ public abstract class CountedCompleter<T> extends ForkJoinTask<T> {
         CountedCompleter<?> a = this, s = a;
         for (int c;;) {
             if ((c = a.pending) == 0) {
+                registerEvent(EventType.COMPLETING, a.traceTag);
                 a.onCompletion(s);
+                registerEvent(EventType.COMPLETED, a.traceTag);
                 if ((a = (s = a).completer) == null) {
                     s.quietlyComplete();
                     return;
@@ -425,7 +429,9 @@ public abstract class CountedCompleter<T> extends ForkJoinTask<T> {
      */
     public void complete(T rawResult) {
         CountedCompleter<?> p;
+        registerEvent(EventType.COMPLETING);
         onCompletion(this);
+        registerEvent(EventType.COMPLETED);
         setRawResult(rawResult);
         quietlyComplete();
         if ((p = completer) != null)
