@@ -296,11 +296,13 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
             if (U.compareAndSwapInt(this, STATUS, s, s | SIGNAL)) {
                 synchronized (this) {
                     if (status >= 0) {
+                        registerEvent(EventType.WAIT, traceTag);
                         try {
                             wait();
                         } catch (InterruptedException ie) {
                             interrupted = true;
                         }
+                        registerEvent(EventType.WAITED, traceTag);
                     }
                     else
                         notifyAll();
@@ -323,9 +325,11 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         while ((s = status) >= 0) {
             if (U.compareAndSwapInt(this, STATUS, s, s | SIGNAL)) {
                 synchronized (this) {
-                    if (status >= 0)
+                    if (status >= 0) {
+                        registerEvent(EventType.WAIT, traceTag);
                         wait();
-                    else
+                        registerEvent(EventType.WAITED, traceTag);
+                    } else
                         notifyAll();
                 }
             }

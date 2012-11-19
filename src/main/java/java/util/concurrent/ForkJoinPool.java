@@ -1060,8 +1060,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                 } catch (SecurityException ignore) {
                 }
             }
-            if ((p = parker) != null)
+            if ((p = parker) != null) {
+                registerEvent(EventType.UNPARK, (int)p.getId());
                 U.unpark(p);
+            }
         }
 
         /**
@@ -2134,8 +2136,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                            (c & (AC_MASK|TC_MASK)));
                 if (U.compareAndSwapLong(this, CTL, c, nc)) {
                     w.eventCount = (e + E_SEQ) & E_MASK;
-                    if ((p = w.parker) != null)
+                    if ((p = w.parker) != null) {
+                        registerEvent(EventType.UNPARK, (int)p.getId());
                         U.unpark(p);
+                    }
                     return true;   // replace with idle worker
                 }
             }
@@ -2468,8 +2472,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                                 U.compareAndSwapLong(this, CTL, cc, nc)) {
                                 w.eventCount = (e + E_SEQ) & E_MASK;
                                 w.qlock = -1;
-                                if ((p = w.parker) != null)
+                                if ((p = w.parker) != null) {
+                                    registerEvent(EventType.UNPARK, (int)p.getId());
                                     U.unpark(p);
+                                }
                             }
                         }
                     }
