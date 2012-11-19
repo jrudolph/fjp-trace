@@ -6,8 +6,6 @@
 
 package java.util.concurrent;
 
-import net.shipilev.fjptrace.EventType;
-
 /**
  * A {@link ForkJoinTask} with a completion action
  * performed when triggered and there are no remaining pending
@@ -79,7 +77,7 @@ import net.shipilev.fjptrace.EventType;
  * continuations, other threads need not block waiting to perform
  * them.
  *
- * <p> For example, here is an initial version of a class that uses
+ * <p>For example, here is an initial version of a class that uses
  * divide-by-two recursive decomposition to divide work into single
  * pieces (leaf tasks). Even when work is split into individual calls,
  * tree-based techniques are usually preferable to directly forking
@@ -144,9 +142,7 @@ import net.shipilev.fjptrace.EventType;
  *
  * As a further improvement, notice that the left task need not even
  * exist.  Instead of creating a new one, we can iterate using the
- * original task, and add a pending count for each fork. Additionally,
- * this version uses {@code helpComplete} to streamline assistance in
- * the execution of forked tasks.
+ * original task, and add a pending count for each fork.
  *
  * <pre> {@code
  * class ForEach<E> ...
@@ -160,7 +156,7 @@ import net.shipilev.fjptrace.EventType;
  *         }
  *         if (h > l)
  *             op.apply(array[l]);
- *         helpComplete();
+ *         tryComplete();
  *     }
  * }</pre>
  *
@@ -404,9 +400,7 @@ public abstract class CountedCompleter<T> extends ForkJoinTask<T> {
         CountedCompleter<?> a = this, s = a;
         for (int c;;) {
             if ((c = a.pending) == 0) {
-                registerEvent(EventType.COMPLETING, a.traceTag);
                 a.onCompletion(s);
-                registerEvent(EventType.COMPLETED, a.traceTag);
                 if ((a = (s = a).completer) == null) {
                     s.quietlyComplete();
                     return;
@@ -414,31 +408,6 @@ public abstract class CountedCompleter<T> extends ForkJoinTask<T> {
             }
             else if (U.compareAndSwapInt(a, PENDING, c, c - 1))
                 return;
-        }
-    }
-
-    /**
-     * Identical to {@link #tryComplete}, but may additionally execute
-     * other tasks within the current computation (i.e., those
-     * with the same {@link #getRoot}.
-     */
-    public final void helpComplete() {
-        CountedCompleter<?> a = this, s = a;
-        for (int c;;) {
-            if ((c = a.pending) == 0) {
-                registerEvent(EventType.COMPLETING, a.traceTag);
-                a.onCompletion(s);
-                registerEvent(EventType.COMPLETED, a.traceTag);
-                if ((a = (s = a).completer) == null) {
-                    s.quietlyComplete();
-                    return;
-                }
-            }
-            else if (U.compareAndSwapInt(a, PENDING, c, c - 1)) {
-                if (!(Thread.currentThread() instanceof ForkJoinWorkerThread)) 
-                    ForkJoinPool.popAndExecCCFromCommonPool(a);
-                return;
-            }
         }
     }
 
@@ -456,9 +425,7 @@ public abstract class CountedCompleter<T> extends ForkJoinTask<T> {
      */
     public void complete(T rawResult) {
         CountedCompleter<?> p;
-        registerEvent(EventType.COMPLETING);
         onCompletion(this);
-        registerEvent(EventType.COMPLETED);
         setRawResult(rawResult);
         quietlyComplete();
         if ((p = completer) != null)
