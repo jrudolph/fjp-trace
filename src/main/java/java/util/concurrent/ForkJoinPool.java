@@ -510,6 +510,22 @@ public class ForkJoinPool extends AbstractExecutorService {
             security.checkPermission(modifyThreadPermission);
     }
 
+    public static void registerExternalEvent(EventType event, int traceTag) {
+        int s;
+        for (Submitter z = null;;) {
+            if ((z = submitters.get()) == null) {
+                if (U.compareAndSwapInt(ForkJoinPool.commonPool, INDEXSEED,
+                        s = ForkJoinPool.commonPool.indexSeed, s += SEED_INCREMENT) &&
+                        s != 0) {
+                    submitters.set(z = new Submitter(s));
+                }
+            } else {
+                z.registerEvent(event, traceTag);
+                return;
+            }
+        }
+    }
+
     // Nested classes
 
     /**
@@ -1145,7 +1161,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         if (caller instanceof ForkJoinWorkerThread)
             ((ForkJoinWorkerThread)caller).workQueue.registerEvent(event, traceTag);
         else
-            submitters.get().registerEvent(event, traceTag);  // assume this is submitter
+            ForkJoinPool.registerExternalEvent(event, traceTag);
     }
 
     /**
