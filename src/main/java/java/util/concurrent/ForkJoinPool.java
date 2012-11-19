@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
  * {@link #toString} returns indications of pool state in a
  * convenient form for informal monitoring.
  *
- * <p> As is the case with other ExecutorServices, there are three
+ * <p>As is the case with other ExecutorServices, there are three
  * main task execution methods summarized in the following table.
  * These are designed to be used primarily by clients not already
  * engaged in fork/join computations in the current pool.  The main
@@ -105,6 +105,7 @@ import java.util.concurrent.TimeUnit;
  * an integer greater than zero, {@code threadFactory} -- the class
  * name of a {@link ForkJoinWorkerThreadFactory}, and {@code
  * exceptionHandler} -- the class name of a {@link
+ * java.lang.Thread.UncaughtExceptionHandler
  * Thread.UncaughtExceptionHandler}. Upon any error in establishing
  * these settings, default parameters are used.
  *
@@ -449,7 +450,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      * perform some subtask processing (see externalHelpJoin and
      * related methods).  We do not need to record whether these
      * submissions are to the common pool -- if not, externalHelpJoin
-     * returns quicky (at the most helping to signal some common pool
+     * returns quickly (at the most helping to signal some common pool
      * workers). These submitters would otherwise be blocked waiting
      * for completion, so the extra effort (with liberally sprinkled
      * task status checks) in inapplicable cases amounts to an odd
@@ -654,7 +655,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
         /**
          * Pushes a task. Call only by owner in unshared queues.
-         * Cases needing resizing or rejection are relyaed to fullPush
+         * Cases needing resizing or rejection are relayed to fullPush
          * (that also handles shared queues).
          *
          * @param task the task. Caller must ensure non-null.
@@ -1291,7 +1292,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                     --spins;
             }
             else if (U.compareAndSwapInt(this, PLOCK, ps, ps | PL_SIGNAL)) {
-                synchronized(this) {
+                synchronized (this) {
                     if ((plock & PL_SIGNAL) != 0) {
                         try {
                             wait();
@@ -1315,7 +1316,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      */
     private void releasePlock(int ps) {
         plock = ps;
-        synchronized(this) { notifyAll(); }
+        synchronized (this) { notifyAll(); }
     }
 
     //  Registering and deregistering workers
@@ -1632,7 +1633,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      * termination and possibly shrink pool.
      *
      * * If already enqueued and none of the above apply, possibly
-     * (with 1/2 probablility) park awaiting signal, else lingering to
+     * (with 1/2 probability) park awaiting signal, else lingering to
      * help scan and signal.
      *
      * @param w the worker (via its WorkQueue)
@@ -1850,7 +1851,7 @@ public class ForkJoinPool extends AbstractExecutorService {
 
     /**
      * Analog of tryHelpStealer for CountedCompleters. Tries to steal
-     * and run tasks within the target's computation
+     * and run tasks within the target's computation.
      *
      * @param task the task to join
      * @param mode if shared, exit upon completing any task
@@ -2305,7 +2306,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                                 }
                                 break;
                             }
-                        } while((r = r.completer) != null);
+                        } while ((r = r.completer) != null);
                     }
                 }
                 if (task != null)
@@ -2476,7 +2477,8 @@ public class ForkJoinPool extends AbstractExecutorService {
      * @return the common pool instance
      */
     public static ForkJoinPool commonPool() {
-        return commonPool; // cannot be null (if so, a static init error)
+        // assert commonPool != null : "static init error";
+        return commonPool;
     }
 
     // Execution methods
@@ -3196,7 +3198,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                            getSystemClassLoader().loadClass(hp).newInstance());
             if (pp != null)
                 par = Integer.parseInt(pp);
-        } catch(Exception ignore) {
+        } catch (Exception ignore) {
         }
 
         int s; // initialize field offsets for CAS etc

@@ -77,7 +77,7 @@ package java.util.concurrent;
  * continuations, other threads need not block waiting to perform
  * them.
  *
- * <p> For example, here is an initial version of a class that uses
+ * <p>For example, here is an initial version of a class that uses
  * divide-by-two recursive decomposition to divide work into single
  * pieces (leaf tasks). Even when work is split into individual calls,
  * tree-based techniques are usually preferable to directly forking
@@ -142,7 +142,7 @@ package java.util.concurrent;
  *
  * As a further improvement, notice that the left task need not even
  * exist.  Instead of creating a new one, we can iterate using the
- * original task, and add a pending count for each fork. 
+ * original task, and add a pending count for each fork.
  *
  * <pre> {@code
  * class ForEach<E> ...
