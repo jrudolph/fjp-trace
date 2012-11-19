@@ -78,7 +78,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         // walk the trees
 
         List<Event> allEvents = new ArrayList<>();
-        List<Event> taskEvents = new ArrayList<>();
 
         // only record the events for the interesting region
         for (Event e : exEvents) {
@@ -87,45 +86,6 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             subgraphs.recordEvent(e);
             allEvents.add(e);
         }
-
-        // only care about the parents in the interesting region
-        Collection<Task> interestingParents = new ArrayList<>();
-        for (Task t : subgraphs.getParents()) {
-            if (fromTime < t.getTime() && t.getTime() < toTime) {
-                interestingParents.add(t);
-            }
-        }
-
-        for (Task t : interestingParents) {
-
-            // compute transitive closure
-
-            Set<Task> visited = new HashSet<>();
-            List<Task> prev = new ArrayList<>();
-            List<Task> cur = new ArrayList<>();
-
-            List<Event> events = new ArrayList<>();
-
-            cur.add(t);
-            while (visited.addAll(cur)) {
-                prev.clear();
-                prev.addAll(cur);
-                cur.clear();
-
-                for (Task c : prev) {
-                    Collection<Task> children = c.getChildren();
-                    if (!children.isEmpty()) {
-                        cur.addAll(children);
-                    }
-                    events.addAll(c.getEvents());
-                }
-
-            }
-
-            taskEvents.addAll(events);
-        }
-
-        // emit graph info
 
         Collections.sort(allEvents, new Comparator<Event>() {
             @Override
@@ -144,7 +104,7 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
             }
         }
 
-        render(allEvents, taskEvents);
+        render(allEvents);
     }
 
     private Point map(Event e) {
@@ -154,11 +114,11 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
                 );
     }
 
-    private void render(Collection<Event> allEvents, Collection<Event> taskEvents) throws IOException {
+    private void render(Collection<Event> allEvents) throws IOException {
 
         // split tasks
         Multimap<Integer, Event> tasks = new Multimap<>();
-        for (Event e : taskEvents) {
+        for (Event e : allEvents) {
             tasks.put(e.tag, e);
         }
 
@@ -173,12 +133,12 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
 
         // render graph: edges
         // Inter-thread edges:
-        //   SUBMIT -> EXEC
-        //     FORK -> EXEC
-        //     EXECED -> JOINED
         renderEdges(tasks, g, EventType.SUBMIT, EventType.EXEC, false, Color.BLUE);
         renderEdges(tasks, g, EventType.FORK, EventType.EXEC, false, Color.GREEN);
-        renderEdges(tasks, g, EventType.EXECUTED, EventType.JOINED, false, Color.RED);
+        renderEdges(tasks, g, EventType.EXECUTED, EventType.JOINED, false, Color.ORANGE);
+        renderEdges(tasks, g, EventType.COMPLETED, EventType.INVOKED, false, Color.ORANGE);
+        renderEdges(tasks, g, EventType.COMPLETED, EventType.JOINED, false, Color.ORANGE);
+        renderEdges(tasks, g, EventType.COMPLETED, EventType.WAITED, false, Color.ORANGE);
         renderEdges(tasks, g, EventType.EXEC, EventType.EXECUTED, true, EXECUTED_COLOR);
         renderEdges(tasks, g, EventType.COMPLETING, EventType.COMPLETED, true, COMPLETING_COLOR);
 
@@ -233,15 +193,19 @@ public class PrintTaskTreesTask extends LoggedRecursiveAction {
         g.setColor(Color.BLUE);         g.fillRect(10 + PAD_LEFT, 10 + 0*LEG_STEP, LEG_STEP, LEG_STEP);
         g.setColor(Color.GREEN);        g.fillRect(10 + PAD_LEFT, 10 + 1*LEG_STEP, LEG_STEP, LEG_STEP);
         g.setColor(Color.ORANGE);       g.fillRect(10 + PAD_LEFT, 10 + 2*LEG_STEP, LEG_STEP, LEG_STEP);
-        g.setColor(Color.RED);          g.fillRect(10 + PAD_LEFT, 10 + 3*LEG_STEP, LEG_STEP, LEG_STEP);
-        g.setColor(Color.LIGHT_GRAY);   g.fillRect(10 + PAD_LEFT, 10 + 4*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.ORANGE);       g.fillRect(10 + PAD_LEFT, 10 + 3*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.ORANGE);       g.fillRect(10 + PAD_LEFT, 10 + 4*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.RED);          g.fillRect(10 + PAD_LEFT, 10 + 5*LEG_STEP, LEG_STEP, LEG_STEP);
+        g.setColor(Color.LIGHT_GRAY);   g.fillRect(10 + PAD_LEFT, 10 + 6*LEG_STEP, LEG_STEP, LEG_STEP);
 
         g.setColor(Color.BLACK);
         g.drawString("SUBMIT -> EXEC edge for the same task",       10 + PAD_LEFT + LEG_STEP + 3, 10 + 0*LEG_STEP + LEG_STEP - 5);
         g.drawString("FORK -> EXEC edge for the same task",         10 + PAD_LEFT + LEG_STEP + 3, 10 + 1*LEG_STEP + LEG_STEP - 5);
         g.drawString("EXECUTED -> JOINED edge for the same task",   10 + PAD_LEFT + LEG_STEP + 3, 10 + 2*LEG_STEP + LEG_STEP - 5);
-        g.drawString("UNPARK -> UNPARKED edge for the same thread", 10 + PAD_LEFT + LEG_STEP + 3, 10 + 3*LEG_STEP + LEG_STEP - 5);
-        g.drawString("EXEC -> EXECUTED edge for the same task",     10 + PAD_LEFT + LEG_STEP + 3, 10 + 4*LEG_STEP + LEG_STEP - 5);
+        g.drawString("COMPLETED -> JOINED edge for the same task",  10 + PAD_LEFT + LEG_STEP + 3, 10 + 3*LEG_STEP + LEG_STEP - 5);
+        g.drawString("COMPLETED -> INVOKED edge for the same task", 10 + PAD_LEFT + LEG_STEP + 3, 10 + 4*LEG_STEP + LEG_STEP - 5);
+        g.drawString("UNPARK -> UNPARKED edge for the same thread", 10 + PAD_LEFT + LEG_STEP + 3, 10 + 5*LEG_STEP + LEG_STEP - 5);
+        g.drawString("EXEC -> EXECUTED edge for the same task",     10 + PAD_LEFT + LEG_STEP + 3, 10 + 6*LEG_STEP + LEG_STEP - 5);
 
 
         ImageIO.write(image, "png", new File(fileNamePng));
