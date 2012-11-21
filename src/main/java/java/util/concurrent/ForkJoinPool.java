@@ -1959,8 +1959,11 @@ public class ForkJoinPool extends AbstractExecutorService {
                     Thread.interrupted();        // clear status
                     U.putObject(wt, PARKBLOCKER, this);
                     w.parker = wt;               // emulate LockSupport.park
-                    if (w.eventCount < 0)        // recheck
+                    if (w.eventCount < 0) {       // recheck
+                        registerEvent(EventType.PARK, (int) wt.getId());
                         U.park(false, 0L);
+                        registerEvent(EventType.UNPARKED, (int) wt.getId());
+                    }
                     w.parker = null;
                     U.putObject(wt, PARKBLOCKER, null);
                 }
@@ -2046,8 +2049,10 @@ public class ForkJoinPool extends AbstractExecutorService {
                     if (w.eventCount == (e | INT_SIGN) &&
                         U.compareAndSwapLong(this, CTL, c, nc)) {
                         w.eventCount = (e + E_SEQ) & E_MASK;
-                        if ((p = w.parker) != null)
+                        if ((p = w.parker) != null) {
+                            registerEvent(EventType.UNPARK, (int) p.getId());
                             U.unpark(p);
+                        }
                         if (--n <= 0)
                             break;
                     }
