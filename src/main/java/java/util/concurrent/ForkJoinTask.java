@@ -1127,7 +1127,7 @@ public abstract class ForkJoinTask<V> implements Future<V>, Serializable {
         if ((status & DONE_MASK) == EXCEPTIONAL)
             clearExceptionalCompletion();
         else
-            status = (ThreadLocalRandom.current().nextInt() & SMASK);
+            status = 0;
     }
 
     /**
